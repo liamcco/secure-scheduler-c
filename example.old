@@ -1,0 +1,61 @@
+int main()
+{
+    int num_tasks = 3;
+    Task *task1 = init_task(5, 1);
+    Task *task2 = init_task(8, 2);
+    Task *task3 = init_task(20, 3);
+
+    task1->id = 1;
+    task2->id = 2;
+    task3->id = 3;
+
+    Task **tasks = (Task **)malloc(num_tasks * sizeof(Task *));
+    tasks[0] = task1;
+    tasks[1] = task2;
+    tasks[2] = task3;
+
+    Processor *processor = init_processor_custom(1, &init_scheduler_ts);
+
+    // Log settings
+    processor->log_attack_data = 1;
+    processor->log_timeslot_data = 1;
+    processor->analyze = &analyze_simulation;
+
+    load_tasks(processor, tasks, num_tasks, &ff);
+
+    int success = run(processor, 10000 * 3000);
+
+    free_processor(processor);
+    free_tasks(tasks, num_tasks);
+
+    return success;
+}
+
+int main()
+{
+    // random seed using current time
+    srand(time(NULL) ^ clock());
+
+    // Generate taskset
+    int n = 5;
+    int m = 1;
+    double U = 0.5;
+    int hyper_period = 3000;
+    Task **tasks = generate_task_set(n, U, hyper_period, 1, 50);
+
+    Processor *processor = init_processor_custom(m, &init_scheduler_ts);
+
+    // Log settings
+    processor->log_attack_data = 0;
+    processor->log_timeslot_data = 1;
+    processor->analyze = &analyze_simulation;
+
+    load_tasks(processor, tasks, n, &ff); // Load tasks into the processor
+
+    int success = run(processor, hyper_period * 10000); // Run for 10000 hyperperiods
+
+    free_processor(processor);
+    free_tasks(tasks, n);
+
+    return success;
+}
