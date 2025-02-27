@@ -17,10 +17,12 @@ int RTA(Task **tasks, int num_tasks)
         }
         else
         {
+            free(approved_tasks);
             return 0;
         }
     }
 
+    free(approved_tasks);
     return 1;
 }
 
