@@ -7,6 +7,8 @@
 #include "partition_algorithms.h"
 #include "taskset.h"
 #include "experiments.h"
+#include "feasibility.h"
+#include "priority.h"
 
 // taskShuffler
 int main()
@@ -27,12 +29,13 @@ int main()
 
     int hyper_period = 3000;
 
-    for (int n_idx = 0; n_idx < 6; n_idx++)
+    for (int i = 0; i < 1; i++)
     {
-        for (int u = 0; u < 10; u++)
+        for (int n_idx = 0; n_idx < 6; n_idx++)
         {
-            for (int i = 0; i < 2; i++)
+            for (int u = 0; u < 10; u++)
             {
+
                 int n = numOfTasks[n_idx];
                 double U_low = utilgroups[2 * u];
                 double U_high = utilgroups[2 * u + 1];
@@ -50,8 +53,12 @@ int main()
                     }
                     if (U_low <= actual_U && actual_U <= U_high)
                     {
-                        tasks = tasks_attempt;
-                        break;
+                        prioritize(tasks_attempt, n, &RM);
+                        if (RTA(tasks_attempt, n))
+                        {
+                            tasks = tasks_attempt;
+                            break;
+                        }
                     }
                     else
                     {
@@ -70,7 +77,7 @@ int main()
                 run(processor, hyper_period * 10000);
 
                 free_processor(processor);
-                free_tasks(tasks, m);
+                free_tasks(tasks, n);
             }
         }
     }

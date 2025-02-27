@@ -60,7 +60,7 @@ void analyze_simulation(Processor *processor)
             U += task->utilization;
         }
 
-        printf("U: %.2f, total_entropy: %.2f, n: %d\n", U, total_entropy, num_tasks);
+        printf("%.2f,%.2f,%d\n", U, total_entropy, num_tasks);
     }
 
     return;

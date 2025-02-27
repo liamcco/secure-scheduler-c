@@ -133,5 +133,7 @@ int run(Processor *processor, int time)
     if (processor->analyze)
         processor->analyze(processor);
 
+    teardown_simulation(processor);
+
     return 0;
 }
