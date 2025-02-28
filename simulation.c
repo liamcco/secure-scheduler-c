@@ -18,9 +18,10 @@ void setup_simulation(Processor *processor, int time)
     data->schedule = calloc(processor->m * time, sizeof(int *));
     data->num_cores = processor->m;
     data->time = time;
-    data->hyperperiod = 40;
+    data->hyperperiod = calculate_hyperperiod(processor->all_tasks->tasks, processor->all_tasks->num_tasks);
+    data->num_tasks = processor->all_tasks->num_tasks;
 
-    int num_tasks = processor->all_tasks->num_tasks;
+    int num_tasks = data->num_tasks;
 
     // Allocate attack data as a contiguous block
     data->attack_data = malloc(num_tasks * sizeof(AttackData));
@@ -32,18 +33,11 @@ void setup_simulation(Processor *processor, int time)
         attack_data->pincher = calloc(num_tasks, sizeof(int));
         attack_data->current_anteriors = calloc(num_tasks, sizeof(int));
         attack_data->current_posteriors = calloc(num_tasks, sizeof(int));
+        attack_data->num_instances = 0;
     }
 
     // Allocate timeslot data
-    data->timeslot_data = malloc(data->num_cores * sizeof(TimeslotData));
-    for (int i = 0; i < data->num_cores; i++)
-    {
-        TimeslotData *timeslot_data = &data->timeslot_data[i];
-        timeslot_data->num_tasks = processor->cores[i]->num_tasks;
-        timeslot_data->hyper_period = calculate_hyperperiod(processor->cores[i]->tasks, timeslot_data->num_tasks);
-
-        timeslot_data->timeslots = calloc(timeslot_data->hyper_period * (timeslot_data->num_tasks + 1), sizeof(int));
-    }
+    data->timeslots = calloc(data->hyperperiod * (num_tasks + 1), sizeof(int));
 
     processor->simulation = data;
 }
@@ -64,12 +58,7 @@ void teardown_simulation(Processor *processor)
     }
     free(data->attack_data);
 
-    for (int i = 0; i < data->num_cores; i++)
-    {
-        TimeslotData *timeslot_data = &data->timeslot_data[i];
-        free(timeslot_data->timeslots);
-    }
-    free(data->timeslot_data);
+    free(data->timeslots);
 
     free(data->schedule);
     free(data);
@@ -124,11 +113,14 @@ void log_execution(Processor *processor, int time)
     Task **tasks = processor->all_tasks->tasks;
     int num_tasks = processor->all_tasks->num_tasks;
 
+    // printf("\n%d:\t", time);
+
     // Enter Schedule
     for (int i = 0; i < processor->m; i++)
     {
         // Schedule
         Task *task = processor->ready_tasks[i];
+        // printf("%d\t", task->id);
 
         if (log_schedule)
             sim_data->schedule[time + i] = task->id;
@@ -136,22 +128,29 @@ void log_execution(Processor *processor, int time)
         // Timeslot data
         if (log_timeslot_data)
         {
-            int core_hyperperiod = sim_data->timeslot_data[i].hyper_period;
-            int c_idx = task->c_idx;
-            sim_data->timeslot_data[i].timeslots[(time % core_hyperperiod) * processor->cores[i]->num_tasks + c_idx]++;
+            int idx = task->idx;
+            sim_data->timeslots[(time % sim_data->hyperperiod) * sim_data->num_tasks + idx]++;
         }
 
         // Attack Data
         if (log_attack_data)
         {
             int executed_idx = processor->ready_tasks[i]->idx;
+            attack_data[executed_idx].num_instances++;
 
             for (int j = 0; j < num_tasks; j++)
             {
-                if (is_fresh(tasks[j]))
-                    attack_data[j].current_anteriors[executed_idx] = 1;
-                if (is_complete(tasks[j]))
-                    attack_data[j].current_posteriors[executed_idx] = 1;
+                for (int k = 0; k < processor->m; k++)
+                {
+                    if (processor->ready_tasks[k]->idx == j)
+                    {
+                        continue;
+                    }
+                    if (is_fresh(tasks[j]))
+                        attack_data[j].current_anteriors[executed_idx] = 1;
+                    if (is_complete(tasks[j]))
+                        attack_data[j].current_posteriors[executed_idx] = 1;
+                }
             }
         }
     }

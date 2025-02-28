@@ -4,10 +4,10 @@
 
 #include "feasibility.h"
 
-int RTA(Task **tasks, int num_tasks)
+int RTA(Task **tasks, int num_tasks, int (*compare)(const void *, const void *))
 {
-
     Task **approved_tasks = malloc(num_tasks * sizeof(Task *));
+    qsort(tasks, num_tasks, sizeof(Task *), compare);
 
     for (int i = 0; i < num_tasks; i++)
     {
@@ -34,7 +34,7 @@ int response_time(Task *task, Task **task_set, int num_tasks)
     while (1)
     {
         wcrt = wcrt_guess;
-        wcrt_guess = task->duration;
+        wcrt_guess = task->duration + task->max_jitter;
         for (int i = 0; i < num_tasks; i++)
         {
             Task *t = task_set[i];
@@ -55,10 +55,19 @@ int response_time(Task *task, Task **task_set, int num_tasks)
     return wcrt;
 }
 
-int RTA_test_with(TaskGroup *group, Task *task)
+int RTA_test_with(TaskGroup *group, Task *task, int (*compare)(const void *, const void *))
 {
     Task **tasks = group->tasks;
     int num_tasks = group->num_tasks;
 
-    return response_time(task, tasks, num_tasks);
+    Task **tasks_copy = malloc((num_tasks + 1) * sizeof(Task *));
+    for (int i = 0; i < num_tasks; i++)
+    {
+        tasks_copy[i] = tasks[i];
+    }
+    tasks_copy[num_tasks] = task;
+
+    int feasible = RTA(tasks_copy, num_tasks + 1, compare);
+    free(tasks_copy);
+    return feasible;
 }

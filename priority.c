@@ -44,9 +44,21 @@ int IU(const void *elem1, const void *elem2)
     Task *task1 = *(Task **)elem1;
     Task *task2 = *(Task **)elem2;
 
-    int f_utilization = task1->duration / task1->period;
-    int s_utilization = task2->duration / task2->period;
-    return f_utilization - s_utilization;
+    double f_utilization = task1->utilization;
+    double s_utilization = task2->utilization;
+
+    if (f_utilization > s_utilization)
+    {
+        return 1;
+    }
+    else if (f_utilization < s_utilization)
+    {
+        return -1;
+    }
+    else
+    {
+        return 0;
+    }
 }
 
 int DU(const void *elem1, const void *elem2)

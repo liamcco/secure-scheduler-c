@@ -18,6 +18,8 @@ typedef struct Partition
 
 void free_partition(Partition *partition);
 
+int check_partition(Partition *partition, int num_tasks);
+
 Partition *ff(Task **tasks, int num_tasks, int m);
 Partition *nf(Task **tasks, int num_tasks, int m);
 Partition *bf(Task **tasks, int num_tasks, int m);

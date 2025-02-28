@@ -17,40 +17,57 @@ void analyze_simulation(Processor *processor)
     {
         for (int i = 0; i < num_tasks; i++)
         {
+            int num_instances = attack_data[i].num_instances;
+            double p_anterior = 0;
+            double p_posterior = 0;
+            double p_pincher = 0;
+
             for (int j = 0; j < num_tasks; j++)
             {
-                if (i == j)
-                    continue;
+                // if (i == j)
+                //     continue;
 
                 if (attack_data[i].anterior[j])
-                    printf("Task %d has %d anterior attacks from task %d\n", i, attack_data[i].anterior[j], j);
+                {
+                    p_anterior += (double)attack_data[i].anterior[j] / num_instances;
+                    // printf("P(%d ant by %d) %f\n", i, j, (double)attack_data[i].anterior[j] / num_instances);
+                }
                 if (attack_data[i].posterior[j])
-                    printf("Task %d has %d posterior attacks from task %d\n", i, attack_data[i].posterior[j], j);
+                {
+                    p_posterior += (double)attack_data[i].posterior[j] / num_instances;
+                    // printf("P(%d post by %d): %f\n", i, j, (double)attack_data[i].posterior[j] / num_instances);
+                }
                 if (attack_data[i].pincher[j])
-                    printf("Task %d has %d pincher attacks from task %d\n", i, attack_data[i].pincher[j], j);
+                {
+                    p_pincher += (double)attack_data[i].pincher[j] / num_instances;
+                    // printf("P(%d pinch by %d): %f\n", i, j, (double)attack_data[i].pincher[j] / num_instances);
+                }
             }
+
+            printf("P(%d ant): %f\n", i, p_anterior);
+            printf("P(%d post): %f\n", i, p_posterior);
+            printf("P(%d pinch): %f\n", i, p_pincher);
         }
     }
 
     if (log_timeslot_data)
     {
         double total_entropy = 0;
-        for (int i = 0; i < processor->m; i++)
-        {
-            TimeslotData *t_data = &sim_data->timeslot_data[i];
-            int num_periods = sim_data->time / t_data->hyper_period;
+        int *t_data = sim_data->timeslots;
+        int hyperperiod = sim_data->hyperperiod;
+        int num_periods = sim_data->time / hyperperiod;
+        int num_tasks = sim_data->num_tasks;
 
-            for (int j = 0; j < t_data->hyper_period; j++)
+        for (int i = 0; i < hyperperiod; i++)
+        {
+            double entropy = 0;
+            for (int j = 0; j < num_tasks + 1; j++)
             {
-                double entropy = 0;
-                for (int k = 0; k < t_data->num_tasks + 1; k++)
-                {
-                    double p = (double)t_data->timeslots[j * t_data->num_tasks + k] / num_periods;
-                    if (p > 0)
-                        entropy -= p * log2(p);
-                }
-                total_entropy += entropy;
+                double p = (double)t_data[i * num_tasks + j] / (num_periods * sim_data->num_cores);
+                if (p > 0)
+                    entropy -= p * log2(p);
             }
+            total_entropy += entropy;
         }
 
         double U = 0;

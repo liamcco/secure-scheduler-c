@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include "processor.h"
 #include "partition_algorithms.h"
@@ -20,6 +21,7 @@ Processor *init_processor(int m)
 
     processor->ready_tasks = (Task **)malloc(m * sizeof(Task *));
 
+    processor->tasks = NULL;
     processor->all_tasks = NULL;
 
     processor->log_schedule = 0;
@@ -57,10 +59,12 @@ void free_processor(Processor *processor)
     free(processor->ready_tasks);
 
     // Free the partition
-    free_partition(processor->tasks);
+    if (processor->tasks)
+        free_partition(processor->tasks);
 
     // Free the task group
-    free(processor->all_tasks);
+    if (processor->all_tasks)
+        free(processor->all_tasks);
 
     free(processor);
 }
@@ -81,7 +85,7 @@ void time_step_processor(Processor *processor)
     }
 }
 
-void load_tasks(
+int load_tasks(
     Processor *processor,
     Task **tasks, int num_tasks,
     Partition *(partition_algorithm)(Task **, int, int))
@@ -90,21 +94,18 @@ void load_tasks(
     processor->all_tasks->tasks = tasks;
     processor->all_tasks->num_tasks = num_tasks;
 
-    // Order before task allocation
-    prioritize(tasks, num_tasks, &RM);
-
     for (int i = 0; i < num_tasks; i++)
     {
         tasks[i]->idx = i;
+        tasks[i]->id = i + 1;
     }
 
     // Partition the tasks
     Partition *partitioned_tasks = partition_algorithm(tasks, num_tasks, processor->m);
 
-    if (partitioned_tasks->num_groups != processor->m)
+    if (!check_partition(partitioned_tasks, num_tasks))
     {
-        printf("Error: Partitioning algorithm did not return the correct number of groups\n");
-        exit(1);
+        return 0;
     }
 
     processor->tasks = partitioned_tasks;
@@ -115,16 +116,20 @@ void load_tasks(
         TaskGroup *group = processor->tasks->task_groups[i];
         load_tasks_core(processor->cores[i], group->tasks, group->num_tasks);
     }
+
+    return 1;
 }
 
 int run(Processor *processor, int time)
 {
     setup_simulation(processor, time);
+
     for (int t = 0; t < time; t++)
     {
         prepare_tasks_processor(processor);
         log_execution(processor, t);
         time_step_processor(processor);
+        // sleep(1);
     }
 
     if (processor->log_attack_data)

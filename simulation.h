@@ -14,22 +14,17 @@ typedef struct AttackData
     int *pincher;
     int *current_anteriors;
     int *current_posteriors;
+    int num_instances;
 } AttackData;
-
-typedef struct TimeslotData
-{
-    int *timeslots;
-    int num_tasks;
-    int hyper_period;
-} TimeslotData;
 
 typedef struct SimulationData
 {
     int *schedule;
     AttackData *attack_data; // Single array instead of double pointer
-    TimeslotData *timeslot_data;
+    int *timeslots;
     int hyperperiod;
     int num_cores;
+    int num_tasks;
     int time;
 } SimulationData;
 

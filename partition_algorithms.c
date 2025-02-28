@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "priority.h"
 #include "partition_algorithms.h"
 #include "feasibility.h"
 
@@ -32,7 +33,7 @@ void free_partition(Partition *partition)
     free(partition);
 }
 
-void check_partition(Partition *partition, int num_tasks)
+int check_partition(Partition *partition, int num_tasks)
 {
     int allocated_tasks = 0;
     for (int i = 0; i < partition->num_groups; i++)
@@ -40,11 +41,7 @@ void check_partition(Partition *partition, int num_tasks)
         allocated_tasks += partition->task_groups[i]->num_tasks;
     }
 
-    if (allocated_tasks != num_tasks)
-    {
-        printf("Error: Partitioning algorithm did not allocate all tasks\n");
-        exit(1);
-    }
+    return allocated_tasks == num_tasks;
 }
 
 Partition *ff(Task **tasks, int num_tasks, int m)
@@ -57,7 +54,7 @@ Partition *ff(Task **tasks, int num_tasks, int m)
         for (int core = 0; core < m; core++)
         {
             TaskGroup *group = partitioned_tasks->task_groups[core];
-            if (RTA_test_with(group, task))
+            if (RTA_test_with(group, task, &RM))
             {
                 group->tasks[group->num_tasks] = task;
                 group->num_tasks++;
@@ -65,8 +62,6 @@ Partition *ff(Task **tasks, int num_tasks, int m)
             }
         }
     }
-
-    check_partition(partitioned_tasks, num_tasks);
 
     return partitioned_tasks;
 }
@@ -82,7 +77,7 @@ Partition *nf(Task **tasks, int num_tasks, int m)
         for (int j = 0; j < m; j++)
         {
             TaskGroup *group = partitioned_tasks->task_groups[(current_core + j) % m];
-            if (RTA_test_with(group, task))
+            if (RTA_test_with(group, task, &RM))
             {
                 group->tasks[group->num_tasks] = task;
                 group->num_tasks++;
@@ -91,8 +86,6 @@ Partition *nf(Task **tasks, int num_tasks, int m)
             }
         }
     }
-
-    check_partition(partitioned_tasks, num_tasks);
 
     return partitioned_tasks;
 }
@@ -111,7 +104,7 @@ Partition *bwf(Task **tasks, int num_tasks, int m, int (*compare)(const void *, 
         for (int core = 0; core < m; core++)
         {
             TaskGroup *group = partitioned_tasks->task_groups[core];
-            if (RTA_test_with(group, task))
+            if (RTA_test_with(group, task, &RM))
             {
                 group->tasks[group->num_tasks] = task;
                 group->num_tasks++;
@@ -121,21 +114,31 @@ Partition *bwf(Task **tasks, int num_tasks, int m, int (*compare)(const void *, 
         }
     }
 
-    check_partition(partitioned_tasks, num_tasks);
-
     return partitioned_tasks;
-}
-
-int compare_task_groups_BF(const void *a, const void *b)
-{
-    TaskGroup *group_a = *(TaskGroup **)a;
-    TaskGroup *group_b = *(TaskGroup **)b;
-    return group_a->utilization - group_b->utilization;
 }
 
 int compare_task_groups_WF(const void *a, const void *b)
 {
-    return -compare_task_groups_BF(a, b);
+    TaskGroup *group_a = *(TaskGroup **)a;
+    TaskGroup *group_b = *(TaskGroup **)b;
+
+    if (group_a->utilization < group_b->utilization)
+    {
+        return -1;
+    }
+    else if (group_a->utilization > group_b->utilization)
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+int compare_task_groups_BF(const void *a, const void *b)
+{
+    return -compare_task_groups_WF(a, b);
 }
 
 Partition *bf(Task **tasks, int num_tasks, int m)
@@ -175,7 +178,7 @@ Partition *rndf(Task **tasks, int num_tasks, int m)
         for (int core = 0; core < m; core++)
         {
             TaskGroup *group = partitioned_tasks->task_groups[core];
-            if (RTA_test_with(group, task))
+            if (RTA_test_with(group, task, &RM))
             {
                 group->tasks[group->num_tasks] = task;
                 group->num_tasks++;
@@ -183,8 +186,6 @@ Partition *rndf(Task **tasks, int num_tasks, int m)
             }
         }
     }
-
-    check_partition(partitioned_tasks, num_tasks);
 
     return partitioned_tasks;
 }
