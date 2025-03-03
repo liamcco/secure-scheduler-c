@@ -12,8 +12,8 @@
 
 Partition *custom_loader(Task **tasks, int num_tasks, int m)
 {
-    prioritize(tasks, num_tasks, &RM);
-    return ff(tasks, num_tasks, m);
+    // prioritize(tasks, num_tasks, &RM);
+    return even2(tasks, num_tasks, m, num_tasks);
 }
 
 // taskShuffler
@@ -22,7 +22,7 @@ int main()
     // random seed using current time
     srand(time(NULL) ^ clock());
 
-    int m = 1;
+    int m = 4;
 
     int numOfTasks[6] = {5, 7, 9, 11, 13, 15};
 
@@ -37,7 +37,7 @@ int main()
 
     for (int i = 0; i < 20; i++)
     {
-        for (int n_idx = 0; n_idx < 1; n_idx++)
+        for (int n_idx = 0; n_idx < 6; n_idx++)
         {
 
             int n = numOfTasks[n_idx] * m;
@@ -66,12 +66,28 @@ int main()
                     continue;
                 }
 
-                run(processor, hyper_period * 10000);
+                // print task partition
+                for (int i = 0; i < m; i++)
+                {
+                    TaskGroup *group = processor->tasks->task_groups[i];
+                    printf("Core %d:\t", i);
+                    for (int j = 0; j < group->num_tasks; j++)
+                    {
+                        printf("%d\t", group->tasks[j]->id);
+                    }
+                    printf("U=%.2f", group->utilization);
+                    printf("\n");
+                }
+
+                int success = run(processor, hyper_period * 1000);
 
                 free_processor(processor);
                 free_tasks(tasks, n);
 
-                exit(0);
+                if (success)
+                {
+                    break;
+                }
             }
         }
     }

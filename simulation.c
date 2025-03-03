@@ -76,6 +76,7 @@ void check_new_tasks_for_attacks(Processor *processor)
         if (is_new(tasks[i]))
         {
             AttackData *data = &attack_data[i];
+            data->num_instances++;
 
             // Summarize current anteriors
             for (int j = 0; j < num_tasks; j++)
@@ -136,20 +137,25 @@ void log_execution(Processor *processor, int time)
         if (log_attack_data)
         {
             int executed_idx = processor->ready_tasks[i]->idx;
-            attack_data[executed_idx].num_instances++;
 
             for (int j = 0; j < num_tasks; j++)
             {
+                int will_execute = 0;
                 for (int k = 0; k < processor->m; k++)
                 {
                     if (processor->ready_tasks[k]->idx == j)
                     {
-                        continue;
+                        will_execute = 1;
+                        break;
                     }
-                    if (is_fresh(tasks[j]))
-                        attack_data[j].current_anteriors[executed_idx] = 1;
-                    if (is_complete(tasks[j]))
-                        attack_data[j].current_posteriors[executed_idx] = 1;
+                }
+                if (will_execute)
+                    continue;
+                if (is_fresh(tasks[j]))
+                    attack_data[j].current_anteriors[executed_idx] = 1;
+                if (is_complete(tasks[j]))
+                {
+                    attack_data[j].current_posteriors[executed_idx] = 1;
                 }
             }
         }

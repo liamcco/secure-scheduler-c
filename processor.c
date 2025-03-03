@@ -140,5 +140,5 @@ int run(Processor *processor, int time)
 
     teardown_simulation(processor);
 
-    return 0;
+    return 1;
 }

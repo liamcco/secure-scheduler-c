@@ -15,39 +15,59 @@ void analyze_simulation(Processor *processor)
 
     if (log_attack_data)
     {
+        double current_max_p_a = 0;
+        double current_max_p_p = 0;
+        double current_max_p_pinch = 0;
         for (int i = 0; i < num_tasks; i++)
         {
-            int num_instances = attack_data[i].num_instances;
-            double p_anterior = 0;
-            double p_posterior = 0;
-            double p_pincher = 0;
+            AttackData *data = &attack_data[i];
+            int num_instances = data->num_instances;
+            double p_anterior_max = 0;
+            double p_posterior_max = 0;
+            double p_pincher_max = 0;
 
             for (int j = 0; j < num_tasks; j++)
             {
                 // if (i == j)
                 //     continue;
 
-                if (attack_data[i].anterior[j])
+                if (data->anterior[j])
                 {
-                    p_anterior += (double)attack_data[i].anterior[j] / num_instances;
-                    // printf("P(%d ant by %d) %f\n", i, j, (double)attack_data[i].anterior[j] / num_instances);
+                    double p_anterior = (double)data->anterior[j] / num_instances;
+                    if (p_anterior > p_anterior_max)
+                        p_anterior_max = p_anterior;
+                    printf("P(%d ant by %d) %f\n", i, j, p_anterior);
                 }
-                if (attack_data[i].posterior[j])
+                if (data->posterior[j])
                 {
-                    p_posterior += (double)attack_data[i].posterior[j] / num_instances;
-                    // printf("P(%d post by %d): %f\n", i, j, (double)attack_data[i].posterior[j] / num_instances);
+                    double p_posterior = (double)data->posterior[j] / num_instances;
+                    if (p_posterior > p_posterior_max)
+                        p_posterior_max = p_posterior;
+                    // printf("P(%d post by %d): %f\n", i, j, p_posterior);
                 }
-                if (attack_data[i].pincher[j])
+                if (data->pincher[j])
                 {
-                    p_pincher += (double)attack_data[i].pincher[j] / num_instances;
-                    // printf("P(%d pinch by %d): %f\n", i, j, (double)attack_data[i].pincher[j] / num_instances);
+                    double p_pincher = (double)data->pincher[j] / num_instances;
+                    if (p_pincher > p_pincher_max)
+                        p_pincher_max = p_pincher;
+                    // printf("P(%d pinch by %d): %f\n", i, j, p_pincher);
                 }
             }
 
-            printf("P(%d ant): %f\n", i, p_anterior);
-            printf("P(%d post): %f\n", i, p_posterior);
-            printf("P(%d pinch): %f\n", i, p_pincher);
+            // printf("P(%d ant): %f\n", i, p_anterior_max);
+            //  printf("P(%d post): %f\n", i, p_posterior);
+            //  printf("P(%d pinch): %f\n", i, p_pincher);
+            if (p_anterior_max > current_max_p_a)
+                current_max_p_a = p_anterior_max;
+            if (p_posterior_max > current_max_p_p)
+                current_max_p_p = p_posterior_max;
+            if (p_pincher_max > current_max_p_pinch)
+                current_max_p_pinch = p_pincher_max;
         }
+        printf("Max Pan: %f\n", current_max_p_a);
+        printf("Max Ppo: %f\n", current_max_p_p);
+        printf("Max Ppi: %f\n", current_max_p_pinch);
+        printf("\n");
     }
 
     if (log_timeslot_data)

@@ -189,3 +189,153 @@ Partition *rndf(Task **tasks, int num_tasks, int m)
 
     return partitioned_tasks;
 }
+
+int compare_task_groups_num_tasks(const void *a, const void *b)
+{
+    TaskGroup *group_a = *(TaskGroup **)a;
+    TaskGroup *group_b = *(TaskGroup **)b;
+
+    return group_a->num_tasks - group_b->num_tasks;
+}
+
+Partition *even(Task **tasks, int num_tasks, int m)
+{
+    // Distribute high util tasks
+    Partition *partitioned_tasks = init_partition(num_tasks, m);
+
+    // Split the tasks set into m/m+1 and 1/m+1 utilizations
+    double total_utilization = 0;
+    for (int i = 0; i < num_tasks; i++)
+    {
+        Task *task = tasks[i];
+        total_utilization += task->utilization;
+    }
+
+    double high_utilization_limit = total_utilization * m / (m + 1);
+    double total_utilization_low_high = 0;
+
+    prioritize(tasks, num_tasks, &DU);
+
+    int first_low_util_task_index = 0;
+    for (int i = 0; i < num_tasks; i++)
+    {
+        Task *task = tasks[i];
+        total_utilization_low_high += task->utilization;
+        if (total_utilization_low_high > high_utilization_limit)
+        {
+            first_low_util_task_index = i + 1;
+            break;
+        }
+    }
+
+    for (int i = 0; i < first_low_util_task_index; i++)
+    {
+        Task *task = tasks[i];
+
+        // sort the cores by utilization
+        qsort(partitioned_tasks->task_groups, m, sizeof(TaskGroup *), compare_task_groups_WF);
+
+        for (int core = 0; core < m; core++)
+        {
+            TaskGroup *group = partitioned_tasks->task_groups[core];
+            if (RTA_test_with(group, task, &RM))
+            {
+                group->tasks[group->num_tasks] = task;
+                group->num_tasks++;
+                group->utilization += task->utilization;
+                break;
+            }
+        }
+    }
+
+    // Distribute low util tasks to cores with lowest amount of cores
+    for (int i = first_low_util_task_index; i < num_tasks; i++)
+    {
+        Task *task = tasks[i];
+
+        // sort the cores by number of tasks
+        qsort(partitioned_tasks->task_groups, m, sizeof(TaskGroup *), compare_task_groups_num_tasks);
+
+        for (int core = 0; core < m; core++)
+        {
+            TaskGroup *group = partitioned_tasks->task_groups[core];
+            if (RTA_test_with(group, task, &RM))
+            {
+                group->tasks[group->num_tasks] = task;
+                group->num_tasks++;
+                group->utilization += task->utilization;
+                break;
+            }
+        }
+    }
+
+    return partitioned_tasks;
+}
+
+Partition *even2(Task **tasks, int num_tasks, int m, int limit)
+{
+
+    // Distribute high util tasks
+    Partition *partitioned_tasks;
+
+    prioritize(tasks, num_tasks, &DU);
+
+    for (int j = 0; j < limit; j++)
+    {
+
+        Partition *temp_partitioned_tasks = init_partition(num_tasks, m);
+
+        int num_low_util_tasks = j;
+        int first_low_util_task_index = num_tasks - 1 - num_low_util_tasks;
+
+        for (int i = 0; i < first_low_util_task_index; i++)
+        {
+            Task *task = tasks[i];
+
+            // sort the cores by utilization
+            qsort(temp_partitioned_tasks->task_groups, m, sizeof(TaskGroup *), compare_task_groups_WF);
+
+            for (int core = 0; core < m; core++)
+            {
+                TaskGroup *group = temp_partitioned_tasks->task_groups[core];
+                if (RTA_test_with(group, task, &RM))
+                {
+                    group->tasks[group->num_tasks] = task;
+                    group->num_tasks++;
+                    group->utilization += task->utilization;
+                    break;
+                }
+            }
+        }
+
+        // Distribute low util tasks to cores with lowest amount of cores
+        for (int i = first_low_util_task_index; i < num_tasks; i++)
+        {
+            Task *task = tasks[i];
+
+            // sort the cores by number of tasks
+            qsort(temp_partitioned_tasks->task_groups, m, sizeof(TaskGroup *), compare_task_groups_num_tasks);
+
+            for (int core = 0; core < m; core++)
+            {
+                TaskGroup *group = temp_partitioned_tasks->task_groups[core];
+                if (RTA_test_with(group, task, &RM))
+                {
+                    group->tasks[group->num_tasks] = task;
+                    group->num_tasks++;
+                    group->utilization += task->utilization;
+                    break;
+                }
+            }
+        }
+        if (check_partition(temp_partitioned_tasks, num_tasks))
+        {
+            partitioned_tasks = temp_partitioned_tasks;
+            continue;
+        }
+        free_partition(temp_partitioned_tasks);
+        break;
+    }
+
+    return partitioned_tasks;
+}
