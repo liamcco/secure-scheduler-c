@@ -88,7 +88,7 @@ void time_step_processor(Processor *processor)
 int load_tasks(
     Processor *processor,
     Task **tasks, int num_tasks,
-    Partition *(partition_algorithm)(Task **, int, int))
+    Partition *(partition_algorithm)(Task **, int, int, double), double fraction)
 {
     processor->all_tasks = (TaskGroup *)malloc(sizeof(TaskGroup));
     processor->all_tasks->tasks = tasks;
@@ -99,9 +99,8 @@ int load_tasks(
         tasks[i]->idx = i;
         tasks[i]->id = i + 1;
     }
-
     // Partition the tasks
-    Partition *partitioned_tasks = partition_algorithm(tasks, num_tasks, processor->m);
+    Partition *partitioned_tasks = partition_algorithm(tasks, num_tasks, processor->m, fraction);
 
     if (!check_partition(partitioned_tasks, num_tasks))
     {

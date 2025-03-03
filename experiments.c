@@ -90,14 +90,7 @@ void analyze_simulation(Processor *processor)
             total_entropy += entropy;
         }
 
-        double U = 0;
-        for (int i = 0; i < num_tasks; i++)
-        {
-            Task *task = processor->all_tasks->tasks[i];
-            U += task->utilization;
-        }
-
-        printf("%.2f,%.2f,%d\n", U, total_entropy, num_tasks);
+        printf("%.2f\n", total_entropy);
     }
 
     return;

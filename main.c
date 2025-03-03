@@ -10,21 +10,36 @@
 #include "feasibility.h"
 #include "priority.h"
 
-Partition *custom_loader(Task **tasks, int num_tasks, int m)
+Partition *custom_loader(Task **tasks, int num_tasks, int m, double fraction)
 {
     // prioritize(tasks, num_tasks, &RM);
-    return even2(tasks, num_tasks, m, num_tasks);
+    // Calculate the limit for the even2 partitioning
+    // total utilization of all tasks
+    double total_utilization = 0;
+    for (int i = 0; i < num_tasks; i++)
+    {
+        total_utilization += tasks[i]->utilization;
+    }
+    // limit for the even2 partitioning
+    double util_limit = total_utilization * fraction;
+    double current_util = 0;
+    int limit = 0;
+    for (int i = 0; i < num_tasks; i++)
+    {
+        current_util += tasks[i]->utilization;
+        if (current_util >= util_limit)
+        {
+            limit = i;
+            break;
+        }
+    }
+
+    return even2(tasks, num_tasks, m, limit);
 }
 
 // taskShuffler
-int main()
+void sim(int n, int m, int k, double fraction)
 {
-    // random seed using current time
-    srand(time(NULL) ^ clock());
-
-    int m = 4;
-
-    int numOfTasks[6] = {5, 7, 9, 11, 13, 15};
 
     double utilgroups[20];
     for (int i = 0; i < 10; i++)
@@ -33,60 +48,95 @@ int main()
         utilgroups[2 * i + 1] = 0.08 + 0.1 * i;
     }
 
+    double U_low = utilgroups[2 * k];
+    double U_high = utilgroups[2 * k + 1];
+    double U = (U_low + (U_high - U_low) * rand() / (RAND_MAX + 1.0)) * m;
+
     int hyper_period = 3000;
 
-    for (int i = 0; i < 20; i++)
+    while (1)
     {
-        for (int n_idx = 0; n_idx < 6; n_idx++)
+        Task **tasks = generate_task_set(n, U, hyper_period, 1, 50);
+
+        Processor *processor = init_processor_custom(m, &init_scheduler_ts);
+
+        processor->log_attack_data = 0;
+        processor->log_timeslot_data = 1;
+        processor->analyze = &analyze_simulation;
+
+        int load_was_successful = load_tasks(processor, tasks, n, &custom_loader, fraction);
+
+        if (!load_was_successful)
         {
+            free_processor(processor);
+            free_tasks(tasks, n);
+            continue;
+        }
 
-            int n = numOfTasks[n_idx] * m;
-            double U = 0.5 * m;
-
-            while (1)
+        int previous_num_tasks = 0;
+        // check if groups all have same number of tasks
+        for (int i = 0; i < m; i++)
+        {
+            TaskGroup *group = processor->tasks->task_groups[i];
+            if (i > 0 && group->num_tasks != previous_num_tasks)
             {
-                Task **tasks = generate_task_set(n, U, hyper_period, 1, 50);
-                /*  if (RTA(tasks_attempt, n, &RM))
+                // printf("Error: Groups do not have the same number of tasks!\n");
+                break;
+            }
+            previous_num_tasks = group->num_tasks;
+        }
+
+        // print task partition
+        /* for (int i = 0; i < m; i++)
+        {
+            TaskGroup *group = processor->tasks->task_groups[i];
+            printf("Core %d:\t", i);
+            for (int j = 0; j < group->num_tasks; j++)
+            {
+                printf("%d\t", group->tasks[j]->id);
+            }
+            printf("U=%.2f", group->utilization);
+            printf("\n");
+        } */
+
+        printf("n=%d, m=%d, U=%f, f=%.2f, E=", n, m, U, fraction);
+        int success = run(processor, hyper_period * 10000);
+
+        free_processor(processor);
+        free_tasks(tasks, n);
+
+        if (success)
+        {
+            break;
+        }
+    }
+}
+
+int main()
+{
+    // random seed using current time
+    srand(time(NULL) ^ clock());
+
+    int num_of_cores[4] = {2, 4, 6, 8};
+    int num_core_configurations = 4;
+
+    int num_of_tasks[6] = {5, 7, 9, 11, 13, 15};
+    int num_task_configurations = 6;
+
+    int num_util_groups = 7;
+
+    for (int f = 0; f <= 10; f++)
+    {
+        double fraction = (double)f / 10.0;
+        for (int i = 0; i < num_core_configurations; i++)
+        {
+            int m = num_of_cores[i];
+            for (int j = 0; j < num_task_configurations; j++)
+            {
+                int n = num_of_tasks[j] * m;
+                for (int k = 0; k < num_util_groups; k++)
                 {
-                    tasks = tasks_attempt;
-                    break;
-                } */
-                Processor *processor = init_processor_custom(m, &init_scheduler_ts);
-
-                processor->log_attack_data = 1;
-                processor->log_timeslot_data = 0;
-                processor->analyze = &analyze_simulation;
-
-                int load_was_successful = load_tasks(processor, tasks, n, &custom_loader);
-
-                if (!load_was_successful)
-                {
-                    free_processor(processor);
-                    free_tasks(tasks, n);
-                    continue;
-                }
-
-                // print task partition
-                for (int i = 0; i < m; i++)
-                {
-                    TaskGroup *group = processor->tasks->task_groups[i];
-                    printf("Core %d:\t", i);
-                    for (int j = 0; j < group->num_tasks; j++)
-                    {
-                        printf("%d\t", group->tasks[j]->id);
-                    }
-                    printf("U=%.2f", group->utilization);
-                    printf("\n");
-                }
-
-                int success = run(processor, hyper_period * 1000);
-
-                free_processor(processor);
-                free_tasks(tasks, n);
-
-                if (success)
-                {
-                    break;
+                    sim(n, m, k, fraction);
                 }
             }
         }

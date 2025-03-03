@@ -276,14 +276,13 @@ Partition *even2(Task **tasks, int num_tasks, int m, int limit)
 {
 
     // Distribute high util tasks
-    Partition *partitioned_tasks;
+    Partition *partitioned_tasks = init_partition(num_tasks, m);
+    Partition *temp_partitioned_tasks = init_partition(num_tasks, m);
 
     prioritize(tasks, num_tasks, &DU);
 
-    for (int j = 0; j < limit; j++)
+    for (int j = -1; j < limit; j++)
     {
-
-        Partition *temp_partitioned_tasks = init_partition(num_tasks, m);
 
         int num_low_util_tasks = j;
         int first_low_util_task_index = num_tasks - 1 - num_low_util_tasks;
@@ -328,14 +327,18 @@ Partition *even2(Task **tasks, int num_tasks, int m, int limit)
                 }
             }
         }
-        if (check_partition(temp_partitioned_tasks, num_tasks))
+        if (!check_partition(temp_partitioned_tasks, num_tasks))
         {
-            partitioned_tasks = temp_partitioned_tasks;
-            continue;
+            free_partition(temp_partitioned_tasks);
+            return partitioned_tasks;
         }
-        free_partition(temp_partitioned_tasks);
-        break;
+
+        partitioned_tasks = temp_partitioned_tasks;
+        temp_partitioned_tasks = init_partition(num_tasks, m);
     }
+
+    if (temp_partitioned_tasks)
+        free_partition(temp_partitioned_tasks);
 
     return partitioned_tasks;
 }
