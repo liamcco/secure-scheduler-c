@@ -50,6 +50,10 @@ void generate_allocations(int n, int m, int task, int allocation[], int max_bin,
         printf("]\n");
         */
         double result = sim(n, m, tasks, allocation);
+        if (result == 0)
+        {
+            return;
+        }
         results[*current] = result;
         *current = *current + 1;
         return;
@@ -113,7 +117,7 @@ int main()
     int m = 3; // Number of bins
     long long total_assignments = count_unique_allocations(n, m);
     printf("Total unique assignments: %lld\n", total_assignments);
-    for (int Uidx = 10; Uidx < 95; Uidx++)
+    for (int Uidx = 1; Uidx < 95; Uidx++)
     {
         double U = Uidx / 100.0;
 
@@ -157,6 +161,7 @@ int main()
         double wf = results[0];
         // sort results
         qsort(results, current, sizeof(double), &compare);
+
         double median = results[current / 2];
         double min = results[0];
         double max = results[current - 1];
@@ -167,11 +172,10 @@ int main()
         }
         avg /= current;
         printf("U=%.2f,", U);
-        printf("WF=%.2f,", wf);
-        printf("Med=%.2f,", median);
-        printf("Min=%.2f,", min);
-        printf("Max=%.2f,", max);
-        printf("Avg=%.2f", avg);
+        printf("WF=%.2f,", wf / max);
+        printf("Med=%.2f,", median / max);
+        printf("Min=%.2f,", min / max);
+        printf("Avg=%.2f", avg / max);
         printf("\n");
     }
 
