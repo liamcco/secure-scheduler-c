@@ -167,7 +167,6 @@ void task_arrived_ts(Scheduler *scheduler, Task *task)
 {
     scheduler->to_schedule = 0;
     task->remaining_inversion_budget = task->maximum_inversion_budget;
-    task->remaining_inversion_budget -= task->deadline - task->remaining_deadline;
 }
 
 void time_step_scheduler_ts(Scheduler *scheduler)
@@ -212,7 +211,7 @@ int minimum_inversion_priority(int c_idx, Task **tasks, int num_tasks)
 
 int worst_case_maximum_inversion_budget(Task *task_i, Task **tasks)
 {
-    return task_i->deadline - (task_i->duration + upper_bound_interference_from_hp(task_i, tasks));
+    return task_i->deadline - (task_i->duration + task_i->max_jitter + upper_bound_interference_from_hp(task_i, tasks));
 }
 
 int upper_bound_interference_from_hp(Task *task_i, Task **tasks)

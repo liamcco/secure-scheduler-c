@@ -3,7 +3,7 @@
 
 #include "experiments.h"
 
-void analyze_simulation(Processor *processor)
+void analyze_simulation(Processor *processor, double *result)
 {
     int log_attack_data = processor->log_attack_data;
     int log_timeslot_data = processor->log_timeslot_data;
@@ -90,7 +90,8 @@ void analyze_simulation(Processor *processor)
             total_entropy += entropy;
         }
 
-        printf("%.2f\n", total_entropy);
+        // printf("%.2f\n", total_entropy);
+        *result = total_entropy;
     }
 
     return;

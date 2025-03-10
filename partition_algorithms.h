@@ -16,6 +16,7 @@ typedef struct Partition
     int num_groups;
 } Partition;
 
+Partition *init_partition(int num_tasks, int m);
 void free_partition(Partition *partition);
 
 int check_partition(Partition *partition, int num_tasks);
@@ -27,5 +28,6 @@ Partition *wf(Task **tasks, int num_tasks, int m);
 Partition *rndf(Task **tasks, int num_tasks, int m);
 Partition *even(Task **tasks, int num_tasks, int m);
 Partition *even2(Task **tasks, int num_tasks, int m, int limit);
+Partition *partition_from_allocation(Task **tasks, int num_tasks, int m, int *allocation);
 
 #endif // PARTITION_ALGORITHMS_H

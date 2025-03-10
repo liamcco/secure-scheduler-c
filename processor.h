@@ -24,7 +24,7 @@ typedef struct Processor
     int log_schedule;
     int log_attack_data;
     int log_timeslot_data;
-    void (*analyze)(struct Processor *processor);
+    void (*analyze)(struct Processor *processor, double *result);
 
     SimulationData *simulation;
 
@@ -35,7 +35,8 @@ Processor *init_processor_custom(int m, Scheduler *(*init_scheduler)());
 void free_processor(Processor *processor);
 Task **schedule_tasks(Processor *processor);
 void time_step_processor(Processor *processor);
-int load_tasks(Processor *processor, Task **tasks, int num_tasks, Partition *(partition_algorithm)(Task **, int, int, double), double fraction);
-int run(Processor *processor, int time);
+int load_tasks(Processor *processor, Task **tasks, int num_tasks, Partition *(partition_algorithm)(Task **, int, int));
+int load_tasks_from_allocation(Processor *processor, Task **tasks, int num_tasks, int *allocation);
+int run(Processor *processor, int time, double *result);
 
 #endif // PROCESSOR_H

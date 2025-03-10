@@ -3,6 +3,6 @@
 
 #include "processor.h"
 
-void analyze_simulation(Processor *processor);
+void analyze_simulation(Processor *processor, double *result);
 
 #endif // EXPERIMENTS_H

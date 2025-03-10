@@ -342,3 +342,26 @@ Partition *even2(Task **tasks, int num_tasks, int m, int limit)
 
     return partitioned_tasks;
 }
+
+Partition *partition_from_allocation(Task **tasks, int num_tasks, int m, int *allocation)
+{
+    // Create partition with m groups
+    Partition *partition = init_partition(num_tasks, m);
+
+    // Load tasks into partition according to allocation
+    for (int i = 0; i < num_tasks; i++)
+    {
+        Task *task = tasks[i];
+        int core = allocation[i] - 1; // -1 for 0-based index
+
+        TaskGroup *group = partition->task_groups[core];
+        if (RTA_test_with(group, task, &RM))
+        {
+            group->tasks[group->num_tasks] = task;
+            group->num_tasks++;
+            group->utilization += task->utilization;
+        }
+    }
+
+    return partition;
+}

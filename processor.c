@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>
 
 #include "processor.h"
 #include "partition_algorithms.h"
@@ -88,7 +87,7 @@ void time_step_processor(Processor *processor)
 int load_tasks(
     Processor *processor,
     Task **tasks, int num_tasks,
-    Partition *(partition_algorithm)(Task **, int, int, double), double fraction)
+    Partition *(partition_algorithm)(Task **, int, int))
 {
     processor->all_tasks = (TaskGroup *)malloc(sizeof(TaskGroup));
     processor->all_tasks->tasks = tasks;
@@ -100,7 +99,7 @@ int load_tasks(
         tasks[i]->id = i + 1;
     }
     // Partition the tasks
-    Partition *partitioned_tasks = partition_algorithm(tasks, num_tasks, processor->m, fraction);
+    Partition *partitioned_tasks = partition_algorithm(tasks, num_tasks, processor->m);
 
     if (!check_partition(partitioned_tasks, num_tasks))
     {
@@ -119,7 +118,41 @@ int load_tasks(
     return 1;
 }
 
-int run(Processor *processor, int time)
+int load_tasks_from_allocation(
+    Processor *processor,
+    Task **tasks, int num_tasks,
+    int *allocation)
+{
+    processor->all_tasks = (TaskGroup *)malloc(sizeof(TaskGroup));
+    processor->all_tasks->tasks = tasks;
+    processor->all_tasks->num_tasks = num_tasks;
+
+    for (int i = 0; i < num_tasks; i++)
+    {
+        tasks[i]->idx = i;
+        tasks[i]->id = i + 1;
+    }
+    // Partition the tasks
+    Partition *partitioned_tasks = partition_from_allocation(tasks, num_tasks, processor->m, allocation);
+
+    if (!check_partition(partitioned_tasks, num_tasks))
+    {
+        return 0;
+    }
+
+    processor->tasks = partitioned_tasks;
+
+    // Load the tasks into the processor
+    for (int i = 0; i < processor->m; i++)
+    {
+        TaskGroup *group = processor->tasks->task_groups[i];
+        load_tasks_core(processor->cores[i], group->tasks, group->num_tasks);
+    }
+
+    return 1;
+}
+
+int run(Processor *processor, int time, double *result)
 {
     setup_simulation(processor, time);
 
@@ -128,14 +161,13 @@ int run(Processor *processor, int time)
         prepare_tasks_processor(processor);
         log_execution(processor, t);
         time_step_processor(processor);
-        // sleep(1);
     }
 
     if (processor->log_attack_data)
         check_new_tasks_for_attacks(processor);
 
     if (processor->analyze)
-        processor->analyze(processor);
+        processor->analyze(processor, result);
 
     teardown_simulation(processor);
 
