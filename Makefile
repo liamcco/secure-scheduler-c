@@ -1,6 +1,6 @@
 # Compiler and Flags
 CC = gcc
-CFLAGS = -Wall -Wextra -Werror -std=c11 -O2 -lm  # Added -O2 for optimization
+CFLAGS = -Wall -Wextra -Wpedantic -Werror -std=c11 -O0 # Added -O2 for optimization
 
 # Source and Object Files
 SRC = $(wildcard *.c)
@@ -30,7 +30,7 @@ $(OBJ_DIR)/%.o: %.c | $(OBJ_DIR)
 
 # Clean Build Files
 clean:
-	rm -rf $(OBJ_DIR) $(TARGET) -lm
+	rm -rf $(OBJ_DIR) $(TARGET)
 
 # Debug Build (no optimization)
 debug: CFLAGS += -g -O0  # Disable optimizations for easier debugging

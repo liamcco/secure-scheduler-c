@@ -31,7 +31,7 @@ typedef struct Processor
 } Processor;
 
 Processor *init_processor(int m);
-Processor *init_processor_custom(int m, Scheduler *(*init_scheduler)());
+Processor *init_processor_custom(int m, Scheduler *(*init_scheduler)(void));
 void free_processor(Processor *processor);
 Task **schedule_tasks(Processor *processor);
 void time_step_processor(Processor *processor);

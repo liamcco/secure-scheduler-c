@@ -5,7 +5,7 @@
 #include "task.h"
 #include "priority.h"
 
-Scheduler *init_scheduler_fp()
+Scheduler *init_scheduler_fp(void)
 {
     Scheduler *scheduler = (Scheduler *)malloc(sizeof(Scheduler));
     scheduler->idle_task = init_idle_task();

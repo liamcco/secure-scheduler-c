@@ -42,7 +42,7 @@ typedef struct Task
 
 // Function prototypes
 Task *init_task(int period, int duration);
-Task *init_idle_task();
+Task *init_idle_task(void);
 void free_tasks(Task **task, int num_tasks);
 int task_is_ready(Task *task);
 int task_is_fresh(Task *task);

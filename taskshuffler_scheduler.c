@@ -7,7 +7,7 @@
 #include "task.h"
 #include "priority.h"
 
-Scheduler *init_scheduler_ts()
+Scheduler *init_scheduler_ts(void)
 {
     Scheduler *scheduler = (Scheduler *)malloc(sizeof(Scheduler));
 

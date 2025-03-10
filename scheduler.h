@@ -32,9 +32,9 @@ typedef struct Scheduler
 #define time_step_scheduler(scheduler) ((scheduler)->time_step_scheduler(scheduler))
 #define load_tasks_scheduler(scheduler, tasks, num_tasks) ((scheduler)->load_tasks_scheduler(scheduler, tasks, num_tasks))
 
-Scheduler *init_scheduler_fp();
+Scheduler *init_scheduler_fp(void);
 Scheduler *init_scheduler_fp_custom(int (*comp)(const void *, const void *));
-Scheduler *init_scheduler_ts();
+Scheduler *init_scheduler_ts(void);
 Scheduler *init_scheduler_ts_custom(int (*comp)(const void *, const void *));
 
 void free_scheduler(Scheduler *scheduler);

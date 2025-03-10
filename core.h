@@ -15,7 +15,7 @@ typedef struct Core
     Scheduler *scheduler;
 } Core;
 
-Core *init_core(int core_id, Scheduler *(*init_scheduler)());
+Core *init_core(int core_id, Scheduler *(*init_scheduler)(void));
 void free_core(Core *core);
 Task *load_next_task(Core *core);
 void execute_core(Core *core);

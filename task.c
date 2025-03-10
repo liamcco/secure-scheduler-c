@@ -53,7 +53,7 @@ void idle_void(__attribute__((unused)) Task *task)
     return;
 }
 
-Task *init_idle_task()
+Task *init_idle_task(void)
 {
     Task *task = (Task *)malloc(sizeof(Task));
 

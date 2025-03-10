@@ -31,7 +31,7 @@ Processor *init_processor(int m)
     return processor;
 }
 
-Processor *init_processor_custom(int m, Scheduler *(*init_scheduler)())
+Processor *init_processor_custom(int m, Scheduler *(*init_scheduler)(void))
 {
     Processor *processor = (Processor *)malloc(sizeof(Processor));
 

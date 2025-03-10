@@ -110,8 +110,9 @@ int compare(const void *a, const void *b)
 }
 
 // Example usage
-int main()
+int main(void)
 {
+    printf("Starting...\n");
     srand(time(NULL) ^ clock());
     int n = 5; // Number of tasks
     int m = 3; // Number of bins
@@ -171,11 +172,11 @@ int main()
             avg += results[i];
         }
         avg /= current;
-        printf("U=%.2f,", U);
-        printf("WF=%.2f,", wf / max);
-        printf("Med=%.2f,", median / max);
-        printf("Min=%.2f,", min / max);
-        printf("Avg=%.2f", avg / max);
+        printf("U=%.3f,", U);
+        printf("WF=%.3f,", wf / max);
+        printf("Med=%.3f,", median / max);
+        printf("Min=%.3f,", min / max);
+        printf("Avg=%.3f", avg / max);
         printf("\n");
     }
 

@@ -3,7 +3,7 @@
 
 #include "core.h"
 
-Core *init_core(int core_id, Scheduler *(*init_scheduler)())
+Core *init_core(int core_id, Scheduler *(*init_scheduler)(void))
 {
     Core *core = (Core *)malloc(sizeof(Core));
     core->core_id = core_id;
