@@ -129,7 +129,7 @@ void log_execution(Processor *processor, int time)
         // Timeslot data
         if (log_timeslot_data)
         {
-            int idx = task->idx;
+            int idx = task->idx + 1;
             sim_data->timeslots[(time % sim_data->hyperperiod) * sim_data->num_tasks + idx]++;
         }
 

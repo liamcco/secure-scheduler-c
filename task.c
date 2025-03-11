@@ -66,6 +66,7 @@ Task *init_idle_task(void)
     task->time_step = &idle_false;
 
     task->id = 0;
+    task->idx = 0;
 
     return task;
 }
