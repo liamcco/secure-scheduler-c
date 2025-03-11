@@ -9,26 +9,7 @@
 
 Processor *init_processor(int m)
 {
-    Processor *processor = (Processor *)malloc(sizeof(Processor));
-
-    processor->m = m;
-    processor->cores = (Core **)malloc(m * sizeof(Core *));
-    for (int i = 0; i < processor->m; i++)
-    {
-        processor->cores[i] = init_core(i, &init_scheduler_fp);
-    }
-
-    processor->ready_tasks = (Task **)malloc(m * sizeof(Task *));
-
-    processor->tasks = NULL;
-    processor->all_tasks = NULL;
-
-    processor->log_schedule = 0;
-    processor->log_attack_data = 0;
-    processor->log_timeslot_data = 0;
-    processor->analyze = NULL;
-
-    return processor;
+    return init_processor_custom(m, &init_scheduler_fp);
 }
 
 Processor *init_processor_custom(int m, Scheduler *(*init_scheduler)(void))
@@ -43,6 +24,15 @@ Processor *init_processor_custom(int m, Scheduler *(*init_scheduler)(void))
     }
 
     processor->ready_tasks = (Task **)malloc(m * sizeof(Task *));
+
+    processor->tasks = NULL;
+    processor->all_tasks = NULL;
+
+    processor->log_schedule = 0;
+    processor->log_attack_data = 0;
+    processor->log_timeslot_data = 0;
+    processor->analyze = NULL;
+
     return processor;
 }
 
@@ -100,6 +90,40 @@ int load_tasks(
     }
     // Partition the tasks
     Partition *partitioned_tasks = partition_algorithm(tasks, num_tasks, processor->m);
+
+    if (!check_partition(partitioned_tasks, num_tasks))
+    {
+        return 0;
+    }
+
+    processor->tasks = partitioned_tasks;
+
+    // Load the tasks into the processor
+    for (int i = 0; i < processor->m; i++)
+    {
+        TaskGroup *group = processor->tasks->task_groups[i];
+        load_tasks_core(processor->cores[i], group->tasks, group->num_tasks);
+    }
+
+    return 1;
+}
+
+int load_tasks_with_algorithm_argument(
+    Processor *processor,
+    Task **tasks, int num_tasks,
+    Partition *(partition_algorithm)(Task **, int, int, double), double fraction)
+{
+    processor->all_tasks = (TaskGroup *)malloc(sizeof(TaskGroup));
+    processor->all_tasks->tasks = tasks;
+    processor->all_tasks->num_tasks = num_tasks;
+
+    for (int i = 0; i < num_tasks; i++)
+    {
+        tasks[i]->idx = i;
+        tasks[i]->id = i + 1;
+    }
+    // Partition the tasks
+    Partition *partitioned_tasks = partition_algorithm(tasks, num_tasks, processor->m, fraction);
 
     if (!check_partition(partitioned_tasks, num_tasks))
     {
