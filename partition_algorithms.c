@@ -46,6 +46,16 @@ int check_partition(Partition *partition, int num_tasks)
 
 Partition *ff(Task **tasks, int num_tasks, int m)
 {
+    return ff_custom(tasks, num_tasks, m, &RM);
+}
+
+Partition *ff_nosort(Task **tasks, int num_tasks, int m)
+{
+    return ff_custom(tasks, num_tasks, m, NULL);
+}
+
+Partition *ff_custom(Task **tasks, int num_tasks, int m, int (*compare)(const void *, const void *))
+{
     Partition *partitioned_tasks = init_partition(num_tasks, m);
 
     for (int i = 0; i < num_tasks; i++)
@@ -54,7 +64,7 @@ Partition *ff(Task **tasks, int num_tasks, int m)
         for (int core = 0; core < m; core++)
         {
             TaskGroup *group = partitioned_tasks->task_groups[core];
-            if (RTA_test_with(group, task, &RM))
+            if (RTA_test_with(group, task, compare))
             {
                 group->tasks[group->num_tasks] = task;
                 group->num_tasks++;

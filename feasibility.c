@@ -7,7 +7,8 @@
 int RTA(Task **tasks, int num_tasks, int (*compare)(const void *, const void *))
 {
     Task **approved_tasks = malloc(num_tasks * sizeof(Task *));
-    qsort(tasks, num_tasks, sizeof(Task *), compare);
+    if (compare)
+        qsort(tasks, num_tasks, sizeof(Task *), compare);
 
     for (int i = 0; i < num_tasks; i++)
     {

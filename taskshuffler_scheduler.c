@@ -41,8 +41,8 @@ void load_tasks_scheduler_ts(Scheduler *scheduler, Task **tasks, int num_tasks)
     scheduler->idle_task->c_idx = num_tasks;
 
     scheduler->ready_tasks = (Task **)malloc(sizeof(Task *) * num_tasks);
-
-    prioritize(tasks, num_tasks, &RM);
+    if (scheduler->compare)
+        prioritize(tasks, num_tasks, scheduler->compare);
 
     for (int i = 0; i < num_tasks; i++)
     {
