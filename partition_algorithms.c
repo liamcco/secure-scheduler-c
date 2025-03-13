@@ -58,6 +58,7 @@ Partition *ff(Task **tasks, int num_tasks, int m)
             {
                 group->tasks[group->num_tasks] = task;
                 group->num_tasks++;
+                group->utilization += task->utilization;
                 break;
             }
         }
@@ -81,6 +82,7 @@ Partition *nf(Task **tasks, int num_tasks, int m)
             {
                 group->tasks[group->num_tasks] = task;
                 group->num_tasks++;
+                group->utilization += task->utilization;
                 current_core = (current_core + j) % m;
                 break;
             }
