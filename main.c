@@ -51,7 +51,7 @@ void swap(int *a, int *b)
 }
 
 // Recursive function to generate permutations
-void generate_permutations(int arr[], int start, int n, Task **tasks, double results[], int *current)
+void generate_permutations(int arr[], int start, int n, Task **tasks, double results[], int *current, int best[], double *best_res, int debug)
 {
     if (start == n)
     {
@@ -62,12 +62,37 @@ void generate_permutations(int arr[], int start, int n, Task **tasks, double res
             tasks_copy[i] = tasks[arr[i]];
         }
         double result = try_simulation(tasks_copy, n);
-        free(tasks_copy);
         if (!result)
+        {
+            free(tasks_copy);
             return;
+        }
 
         results[*current] = result;
         *current = *current + 1;
+
+        if (result > *best_res)
+        {
+            *best_res = result;
+            for (int i = 0; i < n; i++)
+            {
+                best[i] = arr[i];
+            }
+        }
+
+        if (debug)
+        {
+            printf("But feasible with:\n");
+            for (int i = 0; i < n; i++)
+            {
+                Task *task = tasks_copy[i];
+                printf("%d: Task T=%d, C=%d\n", i, task->period, task->duration);
+            }
+            printf("Result: %f\n\n", result);
+            exit(1);
+        }
+        free(tasks_copy);
+
         return;
     }
 
@@ -77,7 +102,7 @@ void generate_permutations(int arr[], int start, int n, Task **tasks, double res
         swap(&arr[start], &arr[i]);
 
         // Recur for the next position
-        generate_permutations(arr, start + 1, n, tasks, results, current);
+        generate_permutations(arr, start + 1, n, tasks, results, current, best, best_res, debug);
 
         // Backtrack (restore original array)
         swap(&arr[start], &arr[i]);
@@ -126,13 +151,20 @@ int main(void)
         prioritize(tasks, n, &RM);
 
         double rm = try_simulation(tasks, n);
+        if (!rm)
+        {
+            free_tasks(tasks, n);
+            continue;
+        }
 
         // Iterate through all possible task priority assignments
 
         int tasks_arr[n];
+        int best[n];
         for (int i = 0; i < n; i++)
         {
             tasks_arr[i] = i;
+            best[i] = i;
         }
 
         int num_permutations; // = factorial(n);
@@ -151,7 +183,16 @@ int main(void)
             results[i + 1] = 0;
         }
 
-        generate_permutations(tasks_arr, 0, n, tasks, results, &current);
+        double best_res = 0;
+        generate_permutations(tasks_arr, 0, n, tasks, results, &current, best, &best_res, 0);
+
+        /* printf("Best result: %f\n", best_res);
+        for (int i = 0; i < n; i++)
+        {
+            Task *task = tasks[best[i]];
+            printf("%d: Task T=%d, C=%d\n", i, task->period, task->duration);
+        } */
+
         free_tasks(tasks, n);
 
         if (current == 1)
@@ -171,6 +212,7 @@ int main(void)
             avg += results[i];
         }
         avg /= current;
+
         printf("U=%.2f,", actual_U);
         printf("RM=%.3f,", rm / max);
         printf("Med=%.3f,", median / max);
