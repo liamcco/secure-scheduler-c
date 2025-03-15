@@ -9,6 +9,7 @@
 #include "experiments.h"
 #include "feasibility.h"
 #include "priority.h"
+#include "opa.h"
 
 Scheduler *init_scheduler_nosort(void)
 {
@@ -148,7 +149,7 @@ int main(void)
             actual_U += tasks[j]->utilization;
         }
 
-        prioritize(tasks, n, &RM);
+        OPA_with_priority(tasks, n, &SM);
 
         double rm = try_simulation(tasks, n);
         if (!rm)
@@ -190,7 +191,9 @@ int main(void)
         for (int i = 0; i < n; i++)
         {
             Task *task = tasks[best[i]];
-            printf("%d: Task T=%d, C=%d\n", i, task->period, task->duration);
+            int slack = task->deadline - task->duration;
+            double utilization = task->utilization;
+            printf("%d: Task T=%d\tC=%d\tS=%d\tU=%.3f\n", i, task->period, task->duration, slack, utilization);
         } */
 
         free_tasks(tasks, n);
@@ -214,7 +217,7 @@ int main(void)
         avg /= current;
 
         printf("U=%.2f,", actual_U);
-        printf("RM=%.3f,", rm / max);
+        printf("OPASM=%.3f,", rm / max);
         printf("Med=%.3f,", median / max);
         printf("Min=%.3f,", min / max);
         printf("Avg=%.3f", avg / max);
