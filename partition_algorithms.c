@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "priority.h"
 #include "partition_algorithms.h"
@@ -376,4 +377,86 @@ Partition *partition_from_allocation(Task **tasks, int num_tasks, int m, int *al
     }
 
     return partition;
+}
+
+Partition *ff_50percent_custom(Task **tasks, int num_tasks, int m)
+{
+    Partition *partitioned_tasks = init_partition(num_tasks, m); // Initialize partitions
+
+    // Create a temp list to track remaining tasks
+    Task **remaining_tasks = malloc(num_tasks * sizeof(Task *));
+    memcpy(remaining_tasks, tasks, num_tasks * sizeof(Task *));
+    int remaining_count = num_tasks;
+
+    int bin_index = 0; // Start with the first bin
+
+    while (remaining_count > 0 && bin_index < m)
+    {
+        TaskGroup *group = partitioned_tasks->task_groups[bin_index];
+
+        if (group->num_tasks == 0) // If bin is empty, pick the first task
+        {
+            if (RTA_test_with(group, remaining_tasks[0], &RM))
+            {
+                group->tasks[group->num_tasks] = remaining_tasks[0];
+                group->utilization += remaining_tasks[0]->utilization;
+                group->num_tasks++;
+
+                // Shift remaining tasks left
+                for (int i = 0; i < remaining_count - 1; i++)
+                {
+                    remaining_tasks[i] = remaining_tasks[i + 1];
+                }
+                remaining_count--;
+            }
+        }
+
+        // Try to add more tasks without exceeding 50%
+        for (int i = 0; i < remaining_count; i++)
+        {
+            if (group->utilization + remaining_tasks[i]->utilization <= 0.5)
+            {
+                if (RTA_test_with(group, remaining_tasks[i], &RM))
+                {
+
+                    group->tasks[group->num_tasks] = remaining_tasks[i];
+                    group->utilization += remaining_tasks[i]->utilization;
+                    group->num_tasks++;
+
+                    // Remove task from remaining list
+                    for (int j = i; j < remaining_count - 1; j++)
+                    {
+                        remaining_tasks[j] = remaining_tasks[j + 1];
+                    }
+                    remaining_count--;
+                    i--; // Adjust index after removal
+                }
+            }
+        }
+
+        bin_index++; // Move to the next bin
+    }
+
+    for (int i = 0; i < remaining_count; i++)
+    {
+        Task *task = remaining_tasks[i];
+
+        // sort the cores by utilization
+        qsort(partitioned_tasks->task_groups, m, sizeof(TaskGroup *), compare_task_groups_WF);
+
+        for (int core = 0; core < m; core++)
+        {
+            TaskGroup *group = partitioned_tasks->task_groups[core];
+            if (RTA_test_with(group, task, &RM))
+            {
+                group->tasks[group->num_tasks] = task;
+                group->num_tasks++;
+                group->utilization += task->utilization;
+                break;
+            }
+        }
+    }
+
+    free(remaining_tasks); // Free temp list
+    return partitioned_tasks;
 }

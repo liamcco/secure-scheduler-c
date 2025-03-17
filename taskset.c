@@ -35,10 +35,10 @@ Task **generate_task_set(int n, double U, int hyper_period, int lowest_duration,
         // period = min(valid_periods, key = lambda p : abs(p - period));
 
         // Find the closest valid period (must be a divisor of period_limit) in C
-        int current_best_period = divisors->divisors[0];
+        int current_best_period = divisors->divisors[divisors->num_divisors - 1];
         for (int j = 0; j < divisors->num_divisors; j++)
         {
-            if (abs(divisors->divisors[j] - period_optimal) < abs(current_best_period - period_optimal))
+            if (abs(divisors->divisors[j] - period_optimal) < abs(current_best_period - period_optimal) && (double)execution_time / (double)divisors->divisors[j] < 1)
             {
                 current_best_period = divisors->divisors[j];
             }

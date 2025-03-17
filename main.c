@@ -9,105 +9,111 @@
 #include "experiments.h"
 #include "feasibility.h"
 #include "priority.h"
-#include "opa.h"
 
-Scheduler *init_scheduler_nosort(void)
+// Litmus test
+double sim(int n, int m, Task **tasks, int *allocation)
 {
-    Scheduler *scheduler = init_scheduler_ts_custom(NULL);
-    return scheduler;
-}
+    int hyper_period = 3000;
 
-double try_simulation(Task **tasks, int n)
-{
-    Processor *processor = init_processor_custom(1, &init_scheduler_nosort);
+    Processor *processor = init_processor_custom(m, &init_scheduler_ts);
 
     processor->log_attack_data = 0;
     processor->log_timeslot_data = 1;
     processor->analyze = &analyze_simulation;
 
-    int load_successful = load_tasks(processor, tasks, n, &ff_nosort);
-    if (!load_successful)
+    int load_was_successful = load_tasks_from_allocation(processor, tasks, n, allocation);
+
+    if (!load_was_successful)
     {
+        free_processor(processor);
         return 0;
     }
 
-    double result = 0;
-    run(processor, 3000 * 1000, &result);
+    // print task partition
+    /* for (int i = 0; i < m; i++)
+    {
+        TaskGroup *group = processor->tasks->task_groups[i];
+        printf("Core %d: ", i);
+        printf("U=%.2f - ", group->utilization);
+        for (int j = 0; j < group->num_tasks; j++)
+        {
+            printf("%d\t", group->tasks[j]->id);
+        }
+
+        printf("\n");
+    } */
+
+    double result;
+    run(processor, hyper_period * 10, &result);
 
     free_processor(processor);
-
-    for (int i = 0; i < n; i++)
-    {
-        reset(tasks[i]);
-    }
 
     return result;
 }
 
-void swap(int *a, int *b)
+// Recursive function to generate unique task assignments
+void generate_allocations(int n, int m, int task, int allocation[], int max_bin, Task **tasks, double results[], int *current)
 {
-    int temp = *a;
-    *a = *b;
-    *b = temp;
-}
-
-// Recursive function to generate permutations
-void generate_permutations(int arr[], int start, int n, Task **tasks, double results[], int *current, int best[], double *best_res, int debug)
-{
-    if (start == n)
-    {
-        // Try running simulation with this allocation
-        Task **tasks_copy = (Task **)malloc(sizeof(Task *) * n);
+    if (task == n)
+    { // Base case: all tasks assigned
+        /* printf("\n[ ");
         for (int i = 0; i < n; i++)
         {
-            tasks_copy[i] = tasks[arr[i]];
+            printf("%d ", allocation[i]);
         }
-        double result = try_simulation(tasks_copy, n);
-        if (!result)
+        printf("]\n"); */
+        double result = sim(n, m, tasks, allocation);
+        if (result == 0)
         {
-            free(tasks_copy);
             return;
         }
-
         results[*current] = result;
         *current = *current + 1;
-
-        if (result > *best_res)
-        {
-            *best_res = result;
-            for (int i = 0; i < n; i++)
-            {
-                best[i] = arr[i];
-            }
-        }
-
-        if (debug)
-        {
-            printf("But feasible with:\n");
-            for (int i = 0; i < n; i++)
-            {
-                Task *task = tasks_copy[i];
-                printf("%d: Task T=%d, C=%d\n", i, task->period, task->duration);
-            }
-            printf("Result: %f\n\n", result);
-            exit(1);
-        }
-        free(tasks_copy);
-
+        // printf("Result: %.3f\n", result);
         return;
     }
 
-    for (int i = start; i < n; i++)
+    // Assign task to an existing bin or the next available bin
+    for (int bin = 1; bin <= max_bin + 1 && bin <= m; bin++)
     {
-        // Swap to fix one element at the current position
-        swap(&arr[start], &arr[i]);
-
-        // Recur for the next position
-        generate_permutations(arr, start + 1, n, tasks, results, current, best, best_res, debug);
-
-        // Backtrack (restore original array)
-        swap(&arr[start], &arr[i]);
+        allocation[task] = bin;
+        generate_allocations(n, m, task + 1, allocation, (bin > max_bin) ? max_bin + 1 : max_bin, tasks, results, current);
     }
+}
+
+// Wrapper function to start recursion
+void generate_unique_allocations(int n, int m, Task **tasks, double results[], int *current)
+{
+    int allocation[n]; // Array to store current allocation
+    generate_allocations(n, m, 0, allocation, 0, tasks, results, current);
+}
+
+// Function to compute factorial of a number
+long long factorial(int x)
+{
+    long long result = 1;
+    for (int i = 2; i <= x; i++)
+    {
+        result *= i;
+    }
+    return result;
+}
+
+// Function to compute T(n, m) = (m^n) / m!
+long long count_unique_allocations(int n, int m)
+{
+    if (m > n)
+        m = n; // More bins than tasks is redundant
+    long long total_assignments = 1;
+
+    // Compute m^n (total assignments without considering bin symmetry)
+    for (int i = 0; i < n; i++)
+    {
+        total_assignments *= m;
+    }
+
+    // Divide by m! to account for interchangeable bins
+    return total_assignments / factorial(m);
 }
 
 // Comparison function for qsort
@@ -117,102 +123,78 @@ int compare(const void *a, const void *b)
     return (diff > 0) - (diff < 0); // Returns -1, 0, or 1
 }
 
-// Recreating taskshuffler results
+// Example usage
 int main(void)
 {
-    // random seed using current time
+    // printf("Starting...\n");
     srand(time(NULL) ^ clock());
-
-    double utilgroups[20];
-    for (int i = 0; i < 10; i++)
+    int n = 5; // Number of tasks
+    int m = 3; // Number of bins
+    long long total_assignments = count_unique_allocations(n, m);
+    // printf("Total unique assignments: %lld\n", total_assignments);
+    for (int Uidx = 5; Uidx < 95; Uidx += 5)
     {
-        utilgroups[2 * i] = 0.02 + 0.1 * i;
-        utilgroups[2 * i + 1] = 0.08 + 0.1 * i;
-    }
+        double U = Uidx / 100.0;
 
-    int hyper_period = 3000;
-    for (int u = 0; u < 10; u++)
-    {
+        int hyper_period = 3000;
 
-        int n = 5;
-        double U_low = utilgroups[2 * u];
-        double U_high = utilgroups[2 * u + 1];
-        double U;
-        double actual_U;
+        Task **tasks = generate_task_set(n, U * m, 3000, 1, 50);
+        prioritize(tasks, n, &RM);
 
-        U = U_low + (U_high - U_low) * rand() / (RAND_MAX + 1.0);
-        Task **tasks = generate_task_set(n, U, hyper_period, 1, 50);
+        // compare with WF-DU
+        Processor *processor = init_processor_custom(m, &init_scheduler_ts);
 
-        actual_U = 0;
-        for (int j = 0; j < n; j++)
+        processor->log_attack_data = 0;
+        processor->log_timeslot_data = 1;
+        processor->analyze = &analyze_simulation;
+
+        int load_was_successful = load_tasks(processor, tasks, n, &ff_50percent_custom);
+
+        if (!load_was_successful)
         {
-            actual_U += tasks[j]->utilization;
-            tasks[j]->id = j + 1;
-        }
-
-        OPA_with_priority(tasks, n, &RSM);
-
-        /* printf("OPA:\n");
-        for (int i = 0; i < n; i++)
-        {
-            Task *task = tasks[i];
-            int slack = task->deadline - task->duration;
-            double utilization = task->utilization;
-            printf("%d: Task %d T=%d\tC=%d\tS=%d\tU=%.3f\n", i + 1, task->id, task->period, task->duration, slack, utilization);
-        }
-        printf("\n"); */
-
-        double rm = try_simulation(tasks, n);
-        if (!rm)
-        {
+            free_processor(processor);
             free_tasks(tasks, n);
             continue;
         }
 
-        // Iterate through all possible task priority assignments
-
-        int tasks_arr[n];
-        int best[n];
-        for (int i = 0; i < n; i++)
+        double actual_U = 0;
+        for (int i = 0; i < m; i++)
         {
-            tasks_arr[i] = i;
-            best[i] = i;
+            TaskGroup *group = processor->tasks->task_groups[i];
+            actual_U += group->utilization;
         }
 
-        int num_permutations; // = factorial(n);
-        num_permutations = 1;
-        for (int i = 1; i <= n; i++)
+        // print task partition
+        /*for (int i = 0; i < m; i++)
         {
-            num_permutations *= i;
-        }
+            TaskGroup *group = processor->tasks->task_groups[i];
+            printf("Core %d: ", i);
+            printf("U=%.2f - ", group->utilization);
+            for (int j = 0; j < group->num_tasks; j++)
+            {
+                printf("%d (T=%d C=%d)\t", group->tasks[j]->id, group->tasks[j]->period, group->tasks[j]->duration);
+            }
 
-        int current = 0;
-        double results[num_permutations + 1];
-        results[current] = rm;
-        current++;
-        for (int i = 0; i < num_permutations; i++)
-        {
-            results[i + 1] = 0;
-        }
-
-        double best_res = 0;
-        generate_permutations(tasks_arr, 0, n, tasks, results, &current, best, &best_res, 0);
-
-        /* printf("Best result: %f\n", best_res);
-        for (int i = 0; i < n; i++)
-        {
-            Task *task = tasks[best[i]];
-            int slack = task->deadline - task->duration;
-            double utilization = task->utilization;
-            printf("%d: Task %d T=%d\tC=%d\tS=%d\tU=%.3f\n", i, task->id, task->period, task->duration, slack, utilization);
+            printf("\n");
         } */
 
-        free_tasks(tasks, n);
+        double result;
+        double results[total_assignments + 1];
+        int current = 0;
 
-        if (current == 1)
-        {
-            continue;
-        }
+        run(processor, hyper_period * 1000, &result);
+        results[current] = result;
+        current++;
+
+        free_processor(processor);
+
+        double ff = results[0];
+        // printf("FF=%.3f\n", ff);
+
+        // Do everyting
+        generate_unique_allocations(n, m, tasks, results, &current);
+
+        free_tasks(tasks, n);
 
         // sort results
         qsort(results, current, sizeof(double), &compare);
@@ -226,12 +208,13 @@ int main(void)
             avg += results[i];
         }
         avg /= current;
-
-        printf("U=%.2f,", actual_U);
-        printf("OPARSM=%.3f,", rm / max);
+        printf("U=%.2f,", actual_U / m);
+        printf("FF=%.3f,", ff / max);
         printf("Med=%.3f,", median / max);
         printf("Min=%.3f,", min / max);
         printf("Avg=%.3f", avg / max);
         printf("\n");
     }
+
+    return 0;
 }

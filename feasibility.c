@@ -29,7 +29,7 @@ int RTA(Task **tasks, int num_tasks, int (*compare)(const void *, const void *))
 
 int response_time(Task *task, Task **task_set, int num_tasks)
 {
-    // printf("Task %d (T=%d): WCRT=", task->id, task->period);
+    // printf("Task %d (T=%d): guess=%d WCRT=", task->id, task->period, task->duration);
     int wcrt_guess = task->duration;
     int wcrt;
 
