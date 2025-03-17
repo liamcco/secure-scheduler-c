@@ -24,7 +24,7 @@ int check_partition(Partition *partition, int num_tasks);
 Partition *ff(Task **tasks, int num_tasks, int m);
 Partition *ff_custom(Task **tasks, int num_tasks, int m, int (*compare)(const void *, const void *));
 Partition *ff_nosort(Task **tasks, int num_tasks, int m);
-Partition *ff_50percent_custom(Task **tasks, int num_tasks, int m);
+Partition *ff_50percent_custom(Task **tasks, int num_tasks, int m, double fraction);
 Partition *nf(Task **tasks, int num_tasks, int m);
 Partition *bf(Task **tasks, int num_tasks, int m);
 Partition *wf(Task **tasks, int num_tasks, int m);

@@ -379,7 +379,7 @@ Partition *partition_from_allocation(Task **tasks, int num_tasks, int m, int *al
     return partition;
 }
 
-Partition *ff_50percent_custom(Task **tasks, int num_tasks, int m)
+Partition *ff_50percent_custom(Task **tasks, int num_tasks, int m, double fraction)
 {
     Partition *partitioned_tasks = init_partition(num_tasks, m); // Initialize partitions
 
@@ -414,7 +414,7 @@ Partition *ff_50percent_custom(Task **tasks, int num_tasks, int m)
         // Try to add more tasks without exceeding 50%
         for (int i = 0; i < remaining_count; i++)
         {
-            if (group->utilization + remaining_tasks[i]->utilization <= 0.5)
+            if (group->utilization + remaining_tasks[i]->utilization <= fraction)
             {
                 if (RTA_test_with(group, remaining_tasks[i], &RM))
                 {
