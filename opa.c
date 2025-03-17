@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "task.h"
 #include "feasibility.h"
 
@@ -12,10 +13,7 @@ int OPA_with_priority(Task **tasks, int num_tasks, int (*compare)(const void *, 
     if (!remaining_tasks)
         return 0; // Memory allocation failure
 
-    for (int i = 0; i < num_tasks; i++)
-    {
-        remaining_tasks[i] = tasks[i];
-    }
+    memcpy(remaining_tasks, tasks, num_tasks * sizeof(Task *));
 
     for (int assigned = 0; assigned < num_tasks; assigned++)
     {
@@ -59,15 +57,26 @@ int OPA_with_priority(Task **tasks, int num_tasks, int (*compare)(const void *, 
         // Assign the lowest priority to the best candidate
         tasks[num_tasks - 1 - assigned] = candidates[0];
 
-        // Remove the assigned task from the remaining set
+        // Create a fresh remaining_tasks array without modifying the old one
+        Task **new_remaining = malloc((num_tasks - assigned - 1) * sizeof(Task *));
+        if (!new_remaining)
+        {
+            free(remaining_tasks);
+            return 0; // Memory allocation failure
+        }
+
         int j = 0;
         for (int i = 0; i < num_tasks - assigned; i++)
         {
             if (remaining_tasks[i] != candidates[0])
             {
-                remaining_tasks[j++] = remaining_tasks[i];
+                new_remaining[j++] = remaining_tasks[i];
             }
         }
+
+        // Free the old `remaining_tasks` and replace it with the new one
+        free(remaining_tasks);
+        remaining_tasks = new_remaining;
         // printf("Assigned task %d\n", tasks[assigned]->id);
     }
 
