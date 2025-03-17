@@ -29,6 +29,7 @@ int RTA(Task **tasks, int num_tasks, int (*compare)(const void *, const void *))
 
 int response_time(Task *task, Task **task_set, int num_tasks)
 {
+    // printf("Task %d (T=%d): WCRT=", task->id, task->period);
     int wcrt_guess = task->duration;
     int wcrt;
 
@@ -44,6 +45,7 @@ int response_time(Task *task, Task **task_set, int num_tasks)
 
         if (wcrt_guess > task->deadline)
         {
+            // printf(">%d\n", wcrt_guess);
             return 0;
         }
 
@@ -53,6 +55,7 @@ int response_time(Task *task, Task **task_set, int num_tasks)
         }
     }
 
+    // printf("%d\n", wcrt);
     return wcrt;
 }
 

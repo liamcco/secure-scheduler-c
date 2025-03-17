@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #include "priority.h"
+#include "feasibility.h"
 
 void prioritize(Task **tasks, int num_tasks, int (*compare)(const void *, const void *))
 {

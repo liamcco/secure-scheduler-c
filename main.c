@@ -147,9 +147,20 @@ int main(void)
         for (int j = 0; j < n; j++)
         {
             actual_U += tasks[j]->utilization;
+            tasks[j]->id = j + 1;
         }
 
-        OPA_with_priority(tasks, n, &SM);
+        OPA_with_priority(tasks, n, &RSM);
+
+        /* printf("OPA:\n");
+        for (int i = 0; i < n; i++)
+        {
+            Task *task = tasks[i];
+            int slack = task->deadline - task->duration;
+            double utilization = task->utilization;
+            printf("%d: Task %d T=%d\tC=%d\tS=%d\tU=%.3f\n", i + 1, task->id, task->period, task->duration, slack, utilization);
+        }
+        printf("\n"); */
 
         double rm = try_simulation(tasks, n);
         if (!rm)
@@ -193,7 +204,7 @@ int main(void)
             Task *task = tasks[best[i]];
             int slack = task->deadline - task->duration;
             double utilization = task->utilization;
-            printf("%d: Task T=%d\tC=%d\tS=%d\tU=%.3f\n", i, task->period, task->duration, slack, utilization);
+            printf("%d: Task %d T=%d\tC=%d\tS=%d\tU=%.3f\n", i, task->id, task->period, task->duration, slack, utilization);
         } */
 
         free_tasks(tasks, n);
@@ -217,7 +228,7 @@ int main(void)
         avg /= current;
 
         printf("U=%.2f,", actual_U);
-        printf("OPASM=%.3f,", rm / max);
+        printf("OPARSM=%.3f,", rm / max);
         printf("Med=%.3f,", median / max);
         printf("Min=%.3f,", min / max);
         printf("Avg=%.3f", avg / max);
