@@ -9,9 +9,9 @@ int OPA_with_priority(Task **tasks, int num_tasks, int (*compare)(const void *, 
     if (num_tasks == 0)
         return 1;
 
+    Task **final_priority = malloc(num_tasks * sizeof(Task *));
+
     Task **remaining_tasks = malloc(num_tasks * sizeof(Task *));
-    if (!remaining_tasks)
-        return 0; // Memory allocation failure
 
     memcpy(remaining_tasks, tasks, num_tasks * sizeof(Task *));
 
@@ -46,6 +46,7 @@ int OPA_with_priority(Task **tasks, int num_tasks, int (*compare)(const void *, 
 
         if (num_candidates == 0)
         {
+            free(final_priority);
             free(remaining_tasks);
             // printf("No feasible priority assignment found\n");
             return 0; // No feasible priority assignment found
@@ -55,12 +56,13 @@ int OPA_with_priority(Task **tasks, int num_tasks, int (*compare)(const void *, 
         qsort(candidates, num_candidates, sizeof(Task *), compare);
 
         // Assign the lowest priority to the best candidate
-        tasks[num_tasks - 1 - assigned] = candidates[0];
+        final_priority[num_tasks - 1 - assigned] = candidates[0];
 
         // Create a fresh remaining_tasks array without modifying the old one
         Task **new_remaining = malloc((num_tasks - assigned - 1) * sizeof(Task *));
         if (!new_remaining)
         {
+            free(final_priority);
             free(remaining_tasks);
             return 0; // Memory allocation failure
         }
@@ -81,5 +83,10 @@ int OPA_with_priority(Task **tasks, int num_tasks, int (*compare)(const void *, 
     }
 
     free(remaining_tasks);
+
+    memcpy(tasks, final_priority, num_tasks * sizeof(Task *));
+
+    free(final_priority);
+
     return 1;
 }
