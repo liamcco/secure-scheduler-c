@@ -43,18 +43,18 @@ void analyze_simulation(Processor *processor, double *result)
                     double p_posterior = (double)data->posterior[j] / num_instances;
                     if (p_posterior > p_posterior_max)
                         p_posterior_max = p_posterior;
-                    // printf("P(%d post by %d): %f\n", i, j, p_posterior);
+                    printf("P(%d post by %d): %f\n", i, j, p_posterior);
                 }
                 if (data->pincher[j])
                 {
                     double p_pincher = (double)data->pincher[j] / num_instances;
                     if (p_pincher > p_pincher_max)
                         p_pincher_max = p_pincher;
-                    // printf("P(%d pinch by %d): %f\n", i, j, p_pincher);
+                    printf("P(%d pinch by %d): %f\n", i, j, p_pincher);
                 }
             }
 
-            // printf("P(%d ant): %f\n", i, p_anterior_max);
+            //  printf("P(%d ant): %f\n", i, p_anterior_max);
             //  printf("P(%d post): %f\n", i, p_posterior);
             //  printf("P(%d pinch): %f\n", i, p_pincher);
             if (p_anterior_max > current_max_p_a)
@@ -81,7 +81,7 @@ void analyze_simulation(Processor *processor, double *result)
         for (int i = 0; i < hyperperiod; i++)
         {
             double entropy = 0;
-            for (int j = 0; j < num_tasks + 1; j++)
+            for (int j = 1; j < num_tasks + 1; j++) // Do not count idle
             {
                 double p = (double)t_data[i * num_tasks + j] / (num_periods * sim_data->num_cores);
                 if (p > 0)
