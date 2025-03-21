@@ -23,6 +23,8 @@ Task *init_task(int period, int duration)
     task->execute = &execute_task;
     task->time_step = &time_step_task;
 
+    task->trusted = 1;
+
     reset_task(task);
 
     return task;
@@ -66,7 +68,7 @@ Task *init_idle_task(void)
     task->time_step = &idle_false;
 
     task->id = 0;
-    task->idx = 0;
+    task->idx = -1;
 
     return task;
 }

@@ -17,8 +17,8 @@ double sim(int n, int m, Task **tasks, int *allocation)
 
     Processor *processor = init_processor_custom(m, &init_scheduler_ts);
 
-    processor->log_attack_data = 0;
-    processor->log_timeslot_data = 1;
+    processor->log_attack_data = 1;
+    processor->log_timeslot_data = 0;
     processor->analyze = &analyze_simulation;
 
     int load_was_successful = load_tasks_from_allocation(processor, tasks, n, allocation);
@@ -69,7 +69,7 @@ void generate_allocations(int n, int m, int task, int allocation[], int max_bin,
         }
         results[*current] = result;
         *current = *current + 1;
-        // printf("Result: %.3f\n", result);
+        // printf("Result: %f\n", result);
         return;
     }
 
@@ -127,19 +127,22 @@ int compare(const void *a, const void *b)
 int main(void)
 {
     // printf("Starting...\n");
-    srand(time(NULL) ^ clock());
+    // srand(time(NULL) ^ clock());
+    srand(1);
     int n = 5; // Number of tasks
     int m = 3; // Number of bins
     long long total_assignments = count_unique_allocations(n, m);
     // printf("Total unique assignments: %lld\n", total_assignments);
-    for (int Uidx = 5; Uidx < 95; Uidx += 5)
+    for (int Uidx = 5; Uidx < 90; Uidx += 5)
     {
         double U = Uidx / 100.0;
 
         int hyper_period = 3000;
 
-        Task **tasks = generate_task_set(n, U * m, 3000, 1, 50);
-        prioritize(tasks, n, &RM);
+        Task **tasks = generate_task_set(n, U * m, hyper_period, 1, 3);
+        prioritize(tasks, n, &DU);
+        int untrusted_idx = rand() % n; // Randomly select an untrusted task
+        tasks[untrusted_idx]->trusted = 0;
 
         double actual_U = 0;
         for (int i = 0; i < n; i++)
@@ -148,13 +151,14 @@ int main(void)
         }
 
         // compare with WF-DU
-        Processor *processor = init_processor_custom(m, &init_scheduler_ts);
+        Processor *processor = init_processor_custom(m, &init_scheduler_fp);
 
-        processor->log_attack_data = 0;
-        processor->log_timeslot_data = 1;
+        processor->log_attack_data = 1;
+        processor->log_timeslot_data = 0;
         processor->analyze = &analyze_simulation;
 
-        int load_was_successful = load_tasks(processor, tasks, n, &ff);
+        // int load_was_successful = load_tasks_with_algorithm_argument(processor, tasks, n, &ff_50percent_custom, 0.50);
+        int load_was_successful = load_tasks(processor, tasks, n, &wf);
 
         if (!load_was_successful)
         {
@@ -171,7 +175,7 @@ int main(void)
             printf("U=%.2f - ", group->utilization);
             for (int j = 0; j < group->num_tasks; j++)
             {
-                printf("%d\t", group->tasks[j]->id);
+                printf("%d (T=%d C=%d U=%.2f)\t", group->tasks[j]->id, group->tasks[j]->period, group->tasks[j]->duration, group->tasks[j]->utilization);
             }
 
             printf("\n");
@@ -188,7 +192,7 @@ int main(void)
         free_processor(processor);
 
         double ff = results[0];
-        // printf("FF=%.3f\n", ff);
+        // printf("CP1=%.3f\n", ff);
 
         // Do everyting
         generate_unique_allocations(n, m, tasks, results, &current);
@@ -208,7 +212,7 @@ int main(void)
         }
         avg /= current;
         printf("U=%.2f,", actual_U);
-        printf("FF=%.3f,", ff / max);
+        printf("ANTWF=%.3f,", ff / max);
         printf("Med=%.3f,", median / max);
         printf("Min=%.3f,", min / max);
         printf("Avg=%.3f", avg / max);

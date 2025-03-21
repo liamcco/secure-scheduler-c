@@ -137,6 +137,8 @@ void log_execution(Processor *processor, int time)
         if (log_attack_data)
         {
             int executed_idx = processor->ready_tasks[i]->idx;
+            if (executed_idx == -1)
+                continue;
 
             for (int j = 0; j < num_tasks; j++)
             {
@@ -154,9 +156,7 @@ void log_execution(Processor *processor, int time)
                 if (is_fresh(tasks[j]))
                     attack_data[j].current_anteriors[executed_idx] = 1;
                 if (is_complete(tasks[j]))
-                {
                     attack_data[j].current_posteriors[executed_idx] = 1;
-                }
             }
         }
     }

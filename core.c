@@ -24,6 +24,11 @@ void load_tasks_core(Core *core, Task **tasks, int num_tasks)
     core->tasks = tasks;
     core->num_tasks = num_tasks;
 
+    for (int i = 0; i < num_tasks; i++)
+    {
+        tasks[i]->c_id = core->core_id;
+    }
+
     load_tasks_scheduler(core->scheduler, tasks, num_tasks);
 }
 

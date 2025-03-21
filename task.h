@@ -27,7 +27,10 @@ typedef struct Task
 
     int maximum_inversion_budget;
     int remaining_inversion_budget;
+    int c_id;
     int c_idx;
+
+    int trusted;
 
 } Task;
 
