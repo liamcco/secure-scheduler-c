@@ -13,7 +13,7 @@
 
 Scheduler *init_scheduler_nosort(void)
 {
-    Scheduler *scheduler = init_scheduler_fp_custom(NULL);
+    Scheduler *scheduler = init_scheduler_ts_custom(&RM);
     return scheduler;
 }
 
@@ -28,7 +28,7 @@ void sim(int n, int m, Task **tasks, double *result)
     processor->log_timeslot_data = 0;
     processor->analyze = &analyze_simulation;
 
-    int load_successful = load_tasks(processor, tasks, n, &ff_nosort);
+    int load_successful = load_tasks(processor, tasks, n, &ff);
 
     if (!load_successful)
     {
@@ -65,9 +65,9 @@ int main(void)
 {
     // printf("Starting...\n");
     srand(time(NULL) ^ clock());
-    int m = 1; // Number of bins
-    int n = 10;
-    for (int U = 5; U < 80; U += 7)
+    int m = 4; // Number of bins
+    int n = 25;
+    for (int U = 5; U < 80; U += 15)
     {
         double u = (double)U / 100;
         for (int k = 1; k < n; k++)
@@ -75,8 +75,8 @@ int main(void)
             int hyper_period = 3000;
 
             Task **tasks = generate_task_set(n, u * m, hyper_period, 1, 50);
-            // prioritize(tasks, n, &RM);
-            OPA_with_priority(tasks, n, &DU);
+            prioritize(tasks, n, &RM);
+            // OPA_with_priority(tasks, n, &DU);
 
             for (int i = n; i > n - k; i--)
             {
@@ -116,7 +116,7 @@ int main(void)
             // printf("CP1=%.3f\n", ff);
 
             printf("k=%d,", k);
-            printf("U=%.3f,", actual_U);
+            printf("U=%.3f,", actual_U / (double)m);
             printf("ANT=%.3f,", result[0]);
             printf("POST=%.3f,", result[1]);
             printf("PINCH=%.3f", result[2]);
