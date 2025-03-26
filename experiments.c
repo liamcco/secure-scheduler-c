@@ -29,6 +29,11 @@ void analyze_simulation(Processor *processor, double *result)
 
         for (int i = 0; i < num_tasks; i++)
         {
+            if (!tasks[i]->trusted)
+            {
+                continue;
+            }
+
             AttackData *data = &attack_data[i];
             int num_instances = data->num_instances;
             double p_anterior_max = 0;
