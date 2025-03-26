@@ -43,8 +43,8 @@ void load_tasks_scheduler_fp(Scheduler *scheduler, Task **tasks, int num_tasks)
 {
     scheduler->tasks = tasks;
     scheduler->num_tasks = num_tasks;
-
-    prioritize(tasks, num_tasks, &RM);
+    if (scheduler->compare)
+        prioritize(tasks, num_tasks, scheduler->compare);
 }
 
 Task *schedule_task_fp(Scheduler *scheduler)

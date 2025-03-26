@@ -9,24 +9,31 @@
 #include "experiments.h"
 #include "feasibility.h"
 #include "priority.h"
+#include "opa.h"
+
+Scheduler *init_scheduler_nosort(void)
+{
+    Scheduler *scheduler = init_scheduler_fp_custom(NULL);
+    return scheduler;
+}
 
 // Litmus test
-double sim(int n, int m, Task **tasks, int *allocation)
+void sim(int n, int m, Task **tasks, double *result)
 {
     int hyper_period = 3000;
 
-    Processor *processor = init_processor_custom(m, &init_scheduler_ts);
+    Processor *processor = init_processor_custom(m, &init_scheduler_nosort);
 
     processor->log_attack_data = 1;
     processor->log_timeslot_data = 0;
     processor->analyze = &analyze_simulation;
 
-    int load_was_successful = load_tasks_from_allocation(processor, tasks, n, allocation);
+    int load_successful = load_tasks(processor, tasks, n, &ff_nosort);
 
-    if (!load_was_successful)
+    if (!load_successful)
     {
         free_processor(processor);
-        return 0;
+        return;
     }
 
     // print task partition
@@ -43,12 +50,14 @@ double sim(int n, int m, Task **tasks, int *allocation)
         printf("\n");
     } */
 
-    double result;
-    run(processor, hyper_period * 1000, &result);
+    run(processor, hyper_period * 1000, result);
 
     free_processor(processor);
 
-    return result;
+    for (int i = 0; i < n; i++)
+    {
+        reset(tasks[i]);
+    }
 }
 
 // Example usage
@@ -58,7 +67,7 @@ int main(void)
     srand(time(NULL) ^ clock());
     int m = 1; // Number of bins
     int n = 10;
-    for (int U = 5; U < 85; U += 10)
+    for (int U = 5; U < 80; U += 7)
     {
         double u = (double)U / 100;
         for (int k = 1; k < n; k++)
@@ -66,7 +75,8 @@ int main(void)
             int hyper_period = 3000;
 
             Task **tasks = generate_task_set(n, u * m, hyper_period, 1, 50);
-            prioritize(tasks, n, &RM);
+            // prioritize(tasks, n, &RM);
+            OPA_with_priority(tasks, n, &DU);
 
             for (int i = n; i > n - k; i--)
             {
@@ -79,20 +89,13 @@ int main(void)
                 actual_U += tasks[i]->utilization;
             }
 
-            // compare with WF-DU
-            Processor *processor = init_processor_custom(m, &init_scheduler_fp);
+            double result[3] = {0, 0, 0};
 
-            processor->log_attack_data = 1;
-            processor->log_timeslot_data = 0;
-            processor->analyze = &analyze_simulation;
+            sim(n, m, tasks, result);
+            free_tasks(tasks, n);
 
-            // int load_was_successful = load_tasks_with_algorithm_argument(processor, tasks, n, &ff_50percent_custom, 0.50);
-            int load_was_successful = load_tasks(processor, tasks, n, &ff);
-
-            if (!load_was_successful)
+            if (result[0] == 0)
             {
-                free_processor(processor);
-                free_tasks(tasks, n);
                 continue;
             }
 
@@ -110,22 +113,13 @@ int main(void)
                 printf("\n");
             } */
 
-            double result[3];
-
-            run(processor, hyper_period * 1000, result);
-
-            free_processor(processor);
-
             // printf("CP1=%.3f\n", ff);
-
-            free_tasks(tasks, n);
 
             printf("k=%d,", k);
             printf("U=%.3f,", actual_U);
             printf("ANT=%.3f,", result[0]);
             printf("POST=%.3f,", result[1]);
-            printf("PINCH=%.3f\n", result[2]);
-
+            printf("PINCH=%.3f", result[2]);
             printf("\n");
         }
     }
