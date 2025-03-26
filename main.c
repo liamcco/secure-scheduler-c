@@ -110,9 +110,9 @@ int main(void)
                 printf("\n");
             } */
 
-            double result;
+            double result[3];
 
-            run(processor, hyper_period * 1000, &result);
+            run(processor, hyper_period * 1000, result);
 
             free_processor(processor);
 
@@ -122,7 +122,10 @@ int main(void)
 
             printf("k=%d,", k);
             printf("U=%.3f,", actual_U);
-            printf("ANT=%.3f,", result);
+            printf("ANT=%.3f,", result[0]);
+            printf("POST=%.3f,", result[1]);
+            printf("PINCH=%.3f\n", result[2]);
+
             printf("\n");
         }
     }

@@ -112,7 +112,14 @@ void analyze_simulation(Processor *processor, double *result)
                 p_pinch_security = 1 - task_max_p_pinch[i];
         }
 
+        *result = p_a_security;
+        // increase result pointer by 1 double to store p_p_security
+        result++;
         *result = p_p_security;
+        // increase result pointer by 1 double to store p_pinch_security
+        result++;
+        *result = p_pinch_security;
+
         // printf("Max Pan: %f\n", current_max_p_a);
         // printf("Max Ppo: %f\n", current_max_p_p);
         // printf("Max Ppi: %f\n", current_max_p_pinch);
