@@ -9,7 +9,9 @@ Core *init_core(int core_id, Scheduler *(*init_scheduler)(void))
     core->core_id = core_id;
 
     Scheduler *scheduler = init_scheduler();
+    scheduler->idle_task->id = -core_id;
     core->scheduler = scheduler;
+
     return core;
 }
 

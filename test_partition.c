@@ -11,7 +11,7 @@
 #include "priority.h"
 
 // Litmus test
-double *sim(int n, int m, Task **tasks, int *allocation)
+void sim(int n, int m, Task **tasks, int *allocation, double *result)
 {
     int hyper_period = 3000;
 
@@ -19,6 +19,7 @@ double *sim(int n, int m, Task **tasks, int *allocation)
 
     processor->log_attack_data = 0;
     processor->log_timeslot_data = 1;
+    processor->horizontal = 1;
     processor->analyze = &analyze_simulation;
 
     int load_was_successful = load_tasks_from_allocation(processor, tasks, n, allocation); // Attempts to load task according to given allocation
@@ -26,7 +27,7 @@ double *sim(int n, int m, Task **tasks, int *allocation)
     if (!load_was_successful)
     {
         free_processor(processor);
-        return 0;
+        return;
     }
 
     // print task partition
@@ -43,12 +44,6 @@ double *sim(int n, int m, Task **tasks, int *allocation)
         printf("\n");
     }*/
 
-    double result[3];
-    for (int i = 0; i < 3; i++)
-    {
-        result[i] = 0;
-    }
-
     // Reset tasks
     for (int i = 0; i < n; i++)
     {
@@ -58,8 +53,7 @@ double *sim(int n, int m, Task **tasks, int *allocation)
     run(processor, hyper_period * 1000, result);
 
     free_processor(processor);
-
-    return result;
+    return;
 }
 
 // Recursive function to generate unique task assignments
@@ -75,14 +69,19 @@ void generate_allocations(int n, int m, int task, int allocation[], int max_bin,
         }
         printf("]\n");
         */
-        double *result = sim(n, m, tasks, allocation);
+        double result[3];
+        for (int i = 0; i < 3; i++)
+        {
+            result[i] = 0;
+        }
+        sim(n, m, tasks, allocation, result);
         if (result[0] == 0)
         {
             return;
         }
         results[*current] = result[0];
         *current = *current + 1;
-        //printf("Result: %.3f\n", result);
+        printf("Result: %.3f\n", result[0]);
         return;
     }
 
@@ -142,14 +141,14 @@ int main(void)
     // printf("Starting...\n");
     srand(time(NULL) ^ clock());
     int n = 5; // Number of tasks
-    int m = 3; // Number of bins
+    int m = 2; // Number of bins
     long long total_assignments = count_unique_allocations(n, m);
     // printf("Total unique assignments: %lld\n", total_assignments);
     double U = 0.5;
 
     int hyper_period = 3000;
 
-    Task **tasks = generate_task_set(n, U * m, 3000, 1, 50);
+    Task **tasks = generate_task_set(n, U * m, hyper_period, 1, 50);
     prioritize(tasks, n, &IU); // <- choose order in which to assign tasks (can also happen in your partitioning algorithm)
 
     double actual_U = 0;
@@ -163,16 +162,17 @@ int main(void)
 
     processor->log_attack_data = 0;
     processor->log_timeslot_data = 1;
+    processor->horizontal = 1;
     processor->analyze = &analyze_simulation;
 
     // int load_was_successful = load_tasks_with_algorithm_argument(processor, tasks, n, &ff_50percent_custom, 0.50); 
-    int load_was_successful = load_tasks(processor, tasks, n, &bf); // <- Load tasks with any partitioning algorithm
+    int load_was_successful = load_tasks(processor, tasks, n, &wf); // <- Load tasks with any partitioning algorithm
 
     if (!load_was_successful)
     {
         free_processor(processor);
         free_tasks(tasks, n);
-        return;
+        return 0;
     }
 
     // print task partition
@@ -188,18 +188,23 @@ int main(void)
         printf("\n");
     }*/
 
-    double result;
+    double result[3];
+    for (int i = 0; i < 3; i++)
+    {
+        result[i] = 0;
+    }
+
     double results[total_assignments + 1];
     int current = 0;
 
-    run(processor, hyper_period * 1000, &result);
-    results[current] = result;
+    run(processor, hyper_period * 10, result);
+    results[current] = result[0];
     current++;
 
     free_processor(processor);
 
     double ff = results[0];
-    //printf("CP1=%.3f\n", ff);
+    printf("CP1=%.3f\n", ff);
 
     // Do everyting
     generate_unique_allocations(n, m, tasks, results, &current);

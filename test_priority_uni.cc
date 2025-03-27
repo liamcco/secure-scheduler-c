@@ -20,7 +20,7 @@ Scheduler *init_scheduler_nosort(void)
     return scheduler;
 }
 
-double *try_simulation(Task **tasks, int n)
+void try_simulation(Task **tasks, int n, double* result)
 {
     Processor *processor = init_processor_custom(1, &init_scheduler_nosort); // Unicore
 
@@ -33,13 +33,7 @@ double *try_simulation(Task **tasks, int n)
                                                                        // (ff assumes RM)
     if (!load_successful)
     {
-        return 0;
-    }
-
-    double result[3];
-    for (int i = 0; i < 3; i++)
-    {
-        result[i] = 0;
+        return;
     }
 
     // Reset tasks if task set is to be reused
@@ -51,8 +45,7 @@ double *try_simulation(Task **tasks, int n)
     run(processor, 3000 * 1000, result);
 
     free_processor(processor);
-
-    return result;
+    return;
 }
 
 void swap(int *a, int *b)
@@ -73,8 +66,13 @@ void generate_permutations(int arr[], int start, int n, Task **tasks, double res
         {
             tasks_copy[i] = tasks[arr[i]];
         }
-        double *result = try_simulation(tasks_copy, n);
-        if (!result)
+        double result[3];
+        for (int i = 0; i < 3; i++)
+        {
+            result[i] = 0;
+        }
+        try_simulation(tasks_copy, n, result);
+        if (!result[0])
         {
             free(tasks_copy);
             return;
@@ -142,7 +140,7 @@ int main(void)
     if (!feasible)
     {
         free_tasks(tasks, n);
-        return;
+        return 0;
     }
 
     /*
@@ -156,7 +154,12 @@ int main(void)
     }
     */
 
-    double *rm = try_simulation(tasks, n); // Run simulation with RM
+    double rm[3];
+    for (int i = 0; i < 3; i++)
+    {
+        rm[i] = 0;
+    }
+    try_simulation(tasks, n, rm); // Run simulation with RM
 
     // Iterate through all possible task priority assignments
 
@@ -219,4 +222,6 @@ int main(void)
     printf("Min=%.3f,", min / max);
     printf("Avg=%.3f", avg / max);
     printf("\n");
+    
+    return 0;
 }

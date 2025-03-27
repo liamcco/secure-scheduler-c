@@ -37,7 +37,7 @@ void setup_simulation(Processor *processor, int time)
     }
 
     // Allocate timeslot data
-    data->timeslots = calloc(data->hyperperiod * (num_tasks + 1), sizeof(int));
+    data->timeslots = calloc(data->hyperperiod * (num_tasks + processor->m), sizeof(int));
 
     processor->simulation = data;
 }
@@ -114,14 +114,14 @@ void log_execution(Processor *processor, int time)
     Task **tasks = processor->all_tasks->tasks;
     int num_tasks = processor->all_tasks->num_tasks;
 
-    // printf("\n%d:\t", time);
+    //printf("\n%d:\t", time);
 
     // Enter Schedule
     for (int i = 0; i < processor->m; i++)
     {
         // Schedule
         Task *task = processor->ready_tasks[i];
-        // printf("%d\t", task->id);
+        //printf("%d\t", task->id);
 
         if (log_schedule)
             sim_data->schedule[time + i] = task->id;
@@ -129,8 +129,8 @@ void log_execution(Processor *processor, int time)
         // Timeslot data
         if (log_timeslot_data)
         {
-            int idx = task->idx + 1;
-            sim_data->timeslots[(time % sim_data->hyperperiod) * sim_data->num_tasks + idx]++;
+            int idx = task->id + processor->m - 1;
+            sim_data->timeslots[(time % sim_data->hyperperiod) * (sim_data->num_tasks + processor->m)+ idx]++;
         }
 
         // Attack Data

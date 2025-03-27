@@ -77,7 +77,7 @@ int main(void)
                 double result[3];
                 run(processor, hyper_period * 10000, result);
                 
-                printf("U=%.2f,", U);
+                printf("U=%.2f,", actual_U);
                 printf("n=%d,", n);
                 printf("E=%.3f,", result[0]);
                 printf("\n");
@@ -87,4 +87,6 @@ int main(void)
             }
         }
     }
+
+    return 0;
 }
