@@ -24,6 +24,7 @@ typedef struct Processor
     int log_schedule;
     int log_attack_data;
     int log_timeslot_data;
+    int horizontal;
     void (*analyze)(struct Processor *processor, double *result);
 
     SimulationData *simulation;
