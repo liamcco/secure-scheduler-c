@@ -19,7 +19,7 @@ void sim(int n, int m, Task **tasks, int *allocation, double *result)
 
     processor->log_attack_data = 0;
     processor->log_timeslot_data = 1;
-    processor->horizontal = 1;
+    processor->horizontal = 0;
     processor->analyze = &analyze_simulation;
 
     int load_was_successful = load_tasks_from_allocation(processor, tasks, n, allocation); // Attempts to load task according to given allocation
@@ -81,7 +81,7 @@ void generate_allocations(int n, int m, int task, int allocation[], int max_bin,
         }
         results[*current] = result[0];
         *current = *current + 1;
-        printf("Result: %.3f\n", result[0]);
+        //printf("Result: %.3f\n", result[0]);
         return;
     }
 
@@ -141,7 +141,7 @@ int main(void)
     // printf("Starting...\n");
     srand(time(NULL) ^ clock());
     int n = 5; // Number of tasks
-    int m = 2; // Number of bins
+    int m = 3; // Number of bins
     long long total_assignments = count_unique_allocations(n, m);
     // printf("Total unique assignments: %lld\n", total_assignments);
     double U = 0.5;
@@ -162,7 +162,7 @@ int main(void)
 
     processor->log_attack_data = 0;
     processor->log_timeslot_data = 1;
-    processor->horizontal = 1;
+    processor->horizontal = 0;
     processor->analyze = &analyze_simulation;
 
     // int load_was_successful = load_tasks_with_algorithm_argument(processor, tasks, n, &ff_50percent_custom, 0.50); 
@@ -197,7 +197,7 @@ int main(void)
     double results[total_assignments + 1];
     int current = 0;
 
-    run(processor, hyper_period * 10, result);
+    run(processor, hyper_period * 1000, result);
     results[current] = result[0];
     current++;
 

@@ -26,7 +26,7 @@ void try_simulation(Task **tasks, int n, double* result)
 
     processor->log_attack_data = 0;
     processor->log_timeslot_data = 1;
-    processor->horizontal = 1;
+    processor->horizontal = 0;
     processor->analyze = &analyze_simulation; // <- This is the function that calculates the result (experiments.c)
 
     int load_successful = load_tasks(processor, tasks, n, &ff_nosort); // <- ff_nosort will fail if the priority assignment is not feasible
@@ -42,7 +42,7 @@ void try_simulation(Task **tasks, int n, double* result)
         reset(tasks[i]);
     }
 
-    run(processor, 3000 * 1000, result);
+    run(processor, 3000, 1000, result);
 
     free_processor(processor);
     return;
@@ -160,6 +160,9 @@ int main(void)
         rm[i] = 0;
     }
     try_simulation(tasks, n, rm); // Run simulation with RM
+    printf("RM: %.3f\n", rm[0]);
+
+    exit(0);
 
     // Iterate through all possible task priority assignments
 

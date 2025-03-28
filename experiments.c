@@ -126,9 +126,8 @@ void analyze_simulation(Processor *processor, double *result)
         // printf("\n");
     }
 
-    if (log_timeslot_data && horizontal)
+    if (log_timeslot_data && !horizontal)
     {
-        //printf("Horizontal\n");
         double total_entropy = 0;
         int *t_data = sim_data->timeslots;
         int hyperperiod = sim_data->hyperperiod;
@@ -149,11 +148,10 @@ void analyze_simulation(Processor *processor, double *result)
 
         total_entropy /= processor->m;
 
-        // printf("%.2f\n", total_entropy);
         *result = total_entropy;
     }
 
-    if (log_timeslot_data && !horizontal)
+    if (log_timeslot_data && horizontal)
     {
         double entropies[processor->m];
         int *t_data = sim_data->timeslots;
@@ -167,18 +165,25 @@ void analyze_simulation(Processor *processor, double *result)
             entropies[i] = 0;
             TaskGroup* tasks = processor->tasks->task_groups[i];
             int num_tasks = tasks->num_tasks;
+            int idx_of_idle = i;
 
-            for (int i = 0; i < hyperperiod; i++)   // for every timeslot
+            for (int k = 0; k < hyperperiod; k++)   // for every timeslot
             {
                 double entropy = 0;
+                double p = (double)t_data[k * num_all_tasks + idx_of_idle] / (num_periods);
+                if (p > 0)
+                    entropy -= p * log2(p);
+                
+
                 for (int j = 0; j < num_tasks; j++)
                 {
-                    int idx = tasks->tasks[j]->idx;
-                    double p = (double)t_data[i * num_all_tasks + idx] / (num_periods);
+                    int idx = tasks->tasks[j]->idx + processor->m;
+                    double p = (double)t_data[k * num_all_tasks + idx] / (num_periods);
                     if (p > 0)
                         entropy -= p * log2(p);
                 }
                 total_entropy += entropy;
+                
             }
             entropies[i] = total_entropy;
         }

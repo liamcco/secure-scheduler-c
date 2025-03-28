@@ -5,7 +5,7 @@
 
 #include "simulation.h"
 
-void setup_simulation(Processor *processor, int time)
+void setup_simulation(Processor *processor, int hyperperiod, int num_hyperperiods)
 {
 
     SimulationData *data = malloc(sizeof(SimulationData));
@@ -15,10 +15,12 @@ void setup_simulation(Processor *processor, int time)
         return;
     }
 
+    int time = hyperperiod * num_hyperperiods;
+
     data->schedule = calloc(processor->m * time, sizeof(int *));
     data->num_cores = processor->m;
     data->time = time;
-    data->hyperperiod = calculate_hyperperiod(processor->all_tasks->tasks, processor->all_tasks->num_tasks);
+    data->hyperperiod = hyperperiod;
     data->num_tasks = processor->all_tasks->num_tasks;
 
     int num_tasks = data->num_tasks;
@@ -114,14 +116,14 @@ void log_execution(Processor *processor, int time)
     Task **tasks = processor->all_tasks->tasks;
     int num_tasks = processor->all_tasks->num_tasks;
 
-    //printf("\n%d:\t", time);
+    // printf("\n%d:\t", time);
 
     // Enter Schedule
     for (int i = 0; i < processor->m; i++)
     {
         // Schedule
         Task *task = processor->ready_tasks[i];
-        //printf("%d\t", task->id);
+        // printf("%d\t", task->id);
 
         if (log_schedule)
             sim_data->schedule[time + i] = task->id;
