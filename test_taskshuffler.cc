@@ -54,7 +54,7 @@ int main(void)
                         actual_U += tasks_attempt[j]->utilization;
                     }
 
-                    if (RTA(tasks_attempt, n, &SM))
+                    if (RTA(tasks_attempt, n, &RM))
                     {
                         tasks = tasks_attempt;
                         break;
@@ -70,12 +70,13 @@ int main(void)
 
                 processor->log_attack_data = 0;
                 processor->log_timeslot_data = 1;
+                processor->horizontal = 1;
                 processor->analyze = &analyze_simulation;
 
                 load_tasks(processor, tasks, n, &ff);
 
                 double result[3];
-                run(processor, hyper_period * 10000, result);
+                run(processor, hyper_period, 10000, result);
                 
                 printf("U=%.2f,", actual_U);
                 printf("n=%d,", n);

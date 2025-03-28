@@ -80,11 +80,7 @@ for (i=0; i<3; i++) {
 
 5. Run the processor
 
-success = run(processor, hyper_period * 1000, result);
-
-If simulation did not succeed, run will return 0.
-
-If success is 1, your data will be ready in result.
+run(processor, hyper_period, 1000, result);
 
 6. Print data
 

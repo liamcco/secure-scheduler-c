@@ -50,7 +50,7 @@ void sim(int n, int m, Task **tasks, int *allocation, double *result)
         reset(tasks[i]);
     }
     
-    run(processor, hyper_period * 1000, result);
+    run(processor, hyper_period, 1000, result);
 
     free_processor(processor);
     return;
@@ -197,7 +197,7 @@ int main(void)
     double results[total_assignments + 1];
     int current = 0;
 
-    run(processor, hyper_period * 1000, result);
+    run(processor, hyper_period, 1000, result);
     results[current] = result[0];
     current++;
 

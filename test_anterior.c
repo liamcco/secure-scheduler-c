@@ -19,6 +19,7 @@ double sim(int n, int m, Task **tasks, int *allocation)
 
     processor->log_attack_data = 1;
     processor->log_timeslot_data = 0;
+    processor->horizontal = 1;
     processor->analyze = &analyze_simulation;
 
     int load_was_successful = load_tasks_from_allocation(processor, tasks, n, allocation);
@@ -44,7 +45,7 @@ double sim(int n, int m, Task **tasks, int *allocation)
     } */
 
     double result;
-    run(processor, hyper_period * 1000, &result);
+    run(processor, hyper_period, 1000, &result);
 
     free_processor(processor);
 
@@ -155,6 +156,7 @@ int main(void)
 
         processor->log_attack_data = 1;
         processor->log_timeslot_data = 0;
+        processor->horizontal = 1;
         processor->analyze = &analyze_simulation;
 
         // int load_was_successful = load_tasks_with_algorithm_argument(processor, tasks, n, &ff_50percent_custom, 0.50);
@@ -185,14 +187,13 @@ int main(void)
         double results[total_assignments + 1];
         int current = 0;
 
-        run(processor, hyper_period * 1000, &result);
+        run(processor, hyper_period, 1000, &result);
         results[current] = result;
         current++;
+        double ff = results[0];
+        printf("CP1=%.3f\n", ff);
 
         free_processor(processor);
-
-        double ff = results[0];
-        // printf("CP1=%.3f\n", ff);
 
         // Do everyting
         generate_unique_allocations(n, m, tasks, results, &current);

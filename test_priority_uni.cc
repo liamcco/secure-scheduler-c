@@ -33,6 +33,7 @@ void try_simulation(Task **tasks, int n, double* result)
                                                                        // (ff assumes RM)
     if (!load_successful)
     {
+        free_processor(processor);
         return;
     }
 
