@@ -68,9 +68,12 @@ int main(void)
     int m = 4; // Number of bins
     int n = 25;
     int hyper_period = 3000;
+    // random int for id
+    
 
     for (int U = 5; U < 80; U += 15)
     {
+        int sim_id = rand() % 1000000;
         double u = (double)U / 100;
         Task **tasks = generate_task_set(n, u * m, hyper_period, 1, 50);
         prioritize(tasks, n, &IU);
@@ -125,6 +128,7 @@ int main(void)
             printf("PIN_V=%.3f,", result[5]);
             printf("E_H=%.3f,", result[6]);
             printf("E_V=%.3f,", result[7]);
+            printf("ID=%d,", sim_id);
             printf("\n");
         }
         free_tasks(tasks, n);
