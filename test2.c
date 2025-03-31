@@ -25,7 +25,7 @@ void sim(int n, int m, Task **tasks, double *result)
     Processor *processor = init_processor_custom(m, &init_scheduler_nosort);
 
     processor->log_attack_data = 1;
-    processor->log_timeslot_data = 0;
+    processor->log_timeslot_data = 1;
     processor->analyze = &analyze_simulation;
 
     int load_successful = load_tasks(processor, tasks, n, &ff);
@@ -50,7 +50,7 @@ void sim(int n, int m, Task **tasks, double *result)
         printf("\n");
     } */
 
-    run(processor, hyper_period * 1000, result);
+    run(processor, hyper_period, 1000, result);
 
     free_processor(processor);
 
@@ -67,20 +67,21 @@ int main(void)
     srand(time(NULL) ^ clock());
     int m = 4; // Number of bins
     int n = 25;
+    int hyper_period = 3000;
+
     for (int U = 5; U < 80; U += 15)
     {
         double u = (double)U / 100;
+        Task **tasks = generate_task_set(n, u * m, hyper_period, 1, 50);
+        prioritize(tasks, n, &IU);
+        // OPA_with_priority(tasks, n, &DU);
+
         for (int k = 1; k < n; k++)
         {
-            int hyper_period = 3000;
 
-            Task **tasks = generate_task_set(n, u * m, hyper_period, 1, 50);
-            prioritize(tasks, n, &RM);
-            // OPA_with_priority(tasks, n, &DU);
-
-            for (int i = n; i > n - k; i--)
+            for (int i = 0; i <= k; i++)
             {
-                tasks[i - 1]->trusted = 0;
+                tasks[i]->trusted = 0;
             }
 
             double actual_U = 0;
@@ -89,12 +90,11 @@ int main(void)
                 actual_U += tasks[i]->utilization;
             }
 
-            double result[3] = {0, 0, 0};
+            double result[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
 
             sim(n, m, tasks, result);
-            free_tasks(tasks, n);
 
-            if (result[0] == 0)
+            if (result[0] == -1)
             {
                 continue;
             }
@@ -117,11 +117,17 @@ int main(void)
 
             printf("k=%d,", k);
             printf("U=%.3f,", actual_U / (double)m);
-            printf("ANT=%.3f,", result[0]);
-            printf("POST=%.3f,", result[1]);
-            printf("PINCH=%.3f", result[2]);
+            printf("ANT_H=%.3f,", result[0]);
+            printf("POS_H=%.3f,", result[1]);
+            printf("PIN_H=%.3f,", result[2]);
+            printf("ANT_V=%.3f,", result[3]);
+            printf("POS_V=%.3f,", result[4]);
+            printf("PIN_V=%.3f,", result[5]);
+            printf("E_H=%.3f,", result[6]);
+            printf("E_V=%.3f,", result[7]);
             printf("\n");
         }
+        free_tasks(tasks, n);
     }
 
     return 0;

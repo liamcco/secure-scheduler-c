@@ -24,9 +24,8 @@ void try_simulation(Task **tasks, int n, double* result)
 {
     Processor *processor = init_processor_custom(1, &init_scheduler_nosort); // Unicore
 
-    processor->log_attack_data = 0;
+    processor->log_attack_data = 1;
     processor->log_timeslot_data = 1;
-    processor->horizontal = 0;
     processor->analyze = &analyze_simulation; // <- This is the function that calculates the result (experiments.c)
 
     int load_successful = load_tasks(processor, tasks, n, &ff_nosort); // <- ff_nosort will fail if the priority assignment is not feasible
@@ -67,8 +66,8 @@ void generate_permutations(int arr[], int start, int n, Task **tasks, double res
         {
             tasks_copy[i] = tasks[arr[i]];
         }
-        double result[3];
-        for (int i = 0; i < 3; i++)
+        double result[8];
+        for (int i = 0; i < 8; i++)
         {
             result[i] = 0;
         }
@@ -155,8 +154,8 @@ int main(void)
     }
     */
 
-    double rm[3];
-    for (int i = 0; i < 3; i++)
+    double rm[8];
+    for (int i = 0; i < 8; i++)
     {
         rm[i] = 0;
     }

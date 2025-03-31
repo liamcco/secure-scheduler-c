@@ -18,8 +18,7 @@ double sim(int n, int m, Task **tasks, int *allocation)
     Processor *processor = init_processor_custom(m, &init_scheduler_ts);
 
     processor->log_attack_data = 1;
-    processor->log_timeslot_data = 0;
-    processor->horizontal = 1;
+    processor->log_timeslot_data = 1;
     processor->analyze = &analyze_simulation;
 
     int load_was_successful = load_tasks_from_allocation(processor, tasks, n, allocation);
@@ -44,12 +43,12 @@ double sim(int n, int m, Task **tasks, int *allocation)
         printf("\n");
     } */
 
-    double result[3];
+    double result[8];
     run(processor, hyper_period, 1000, result);
 
     free_processor(processor);
 
-    return result[0];
+    return result[7];
 }
 
 // Recursive function to generate unique task assignments
@@ -156,8 +155,7 @@ int main(void)
         Processor *processor = init_processor_custom(m, &init_scheduler_fp);
 
         processor->log_attack_data = 1;
-        processor->log_timeslot_data = 0;
-        processor->horizontal = 1;
+        processor->log_timeslot_data = 1;
         processor->analyze = &analyze_simulation;
 
         // int load_was_successful = load_tasks_with_algorithm_argument(processor, tasks, n, &ff_50percent_custom, 0.50);
@@ -184,15 +182,15 @@ int main(void)
             printf("\n");
         } */
 
-        double result[3];
+        double result[8];
         double results[total_assignments + 1];
         int current = 0;
 
         run(processor, hyper_period, 1000, result);
-        results[current] = result[0];
+        results[current] = result[7];
         current++;
         double ff = results[0];
-        printf("CP1=%.3f\n", ff);
+        //printf("CP1=%.3f\n", ff);
 
         free_processor(processor);
 
