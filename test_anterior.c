@@ -140,9 +140,11 @@ int main(void)
         int hyper_period = 3000;
 
         Task **tasks = generate_task_set(n, U * m, hyper_period, 1, 50);
-        prioritize(tasks, n, &RM);
-        int untrusted_idx = n-1;
+        prioritize(tasks, n, &IU);
+        int untrusted_idx = 0;
         tasks[untrusted_idx]->trusted = 0;
+
+        prioritize(tasks, n, &RM);
 
         double actual_U = 0;
         for (int i = 0; i < n; i++)
