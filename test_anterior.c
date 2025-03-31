@@ -44,12 +44,12 @@ double sim(int n, int m, Task **tasks, int *allocation)
         printf("\n");
     } */
 
-    double result;
-    run(processor, hyper_period, 1000, &result);
+    double result[3];
+    run(processor, hyper_period, 1000, result);
 
     free_processor(processor);
 
-    return result;
+    return result[0];
 }
 
 // Recursive function to generate unique task assignments
@@ -128,8 +128,7 @@ int compare(const void *a, const void *b)
 int main(void)
 {
     // printf("Starting...\n");
-    // srand(time(NULL) ^ clock());
-    srand(1);
+    srand(time(NULL) ^ clock());
     int n = 5; // Number of tasks
     int m = 3; // Number of bins
     long long total_assignments = count_unique_allocations(n, m);
@@ -140,9 +139,9 @@ int main(void)
 
         int hyper_period = 3000;
 
-        Task **tasks = generate_task_set(n, U * m, hyper_period, 1, 3);
-        prioritize(tasks, n, &DU);
-        int untrusted_idx = rand() % n; // Randomly select an untrusted task
+        Task **tasks = generate_task_set(n, U * m, hyper_period, 1, 50);
+        prioritize(tasks, n, &RM);
+        int untrusted_idx = n-1;
         tasks[untrusted_idx]->trusted = 0;
 
         double actual_U = 0;
@@ -183,12 +182,12 @@ int main(void)
             printf("\n");
         } */
 
-        double result;
+        double result[3];
         double results[total_assignments + 1];
         int current = 0;
 
-        run(processor, hyper_period, 1000, &result);
-        results[current] = result;
+        run(processor, hyper_period, 1000, result);
+        results[current] = result[0];
         current++;
         double ff = results[0];
         printf("CP1=%.3f\n", ff);
