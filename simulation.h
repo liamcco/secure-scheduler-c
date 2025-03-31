@@ -28,7 +28,7 @@ typedef struct SimulationData
     int time;
 } SimulationData;
 
-void setup_simulation(Processor *processor, int time);
+void setup_simulation(Processor *processor, int hp, int n_hp);
 void log_execution(Processor *processor, int time);
 void check_new_tasks_for_attacks(Processor *processor);
 int calculate_hyperperiod(struct Task **tasks, int num_tasks);

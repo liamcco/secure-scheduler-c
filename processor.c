@@ -176,9 +176,11 @@ int load_tasks_from_allocation(
     return 1;
 }
 
-int run(Processor *processor, int time, double *result)
+int run(Processor *processor, int hyperperiod, int num_hyperperiods, double *result)
 {
-    setup_simulation(processor, time);
+    setup_simulation(processor, hyperperiod, num_hyperperiods);
+
+    int time = hyperperiod * num_hyperperiods;
 
     for (int t = 0; t < time; t++)
     {

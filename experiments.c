@@ -5,7 +5,7 @@
 
 void analyze_simulation(Processor *processor, double *result)
 {
-    int horizontal = 1;
+    int horizontal = processor->horizontal;
     int log_attack_data = processor->log_attack_data;
     int log_timeslot_data = processor->log_timeslot_data;
 
@@ -126,28 +126,77 @@ void analyze_simulation(Processor *processor, double *result)
         // printf("\n");
     }
 
-    if (log_timeslot_data)
+    if (log_timeslot_data && !horizontal)
     {
         double total_entropy = 0;
         int *t_data = sim_data->timeslots;
         int hyperperiod = sim_data->hyperperiod;
         int num_periods = sim_data->time / hyperperiod;
-        int num_tasks = sim_data->num_tasks;
+        int num_tasks = sim_data->num_tasks + processor->m;
 
-        for (int i = 0; i < hyperperiod; i++)
+        for (int i = 0; i < hyperperiod; i++)   // for every timeslot
         {
             double entropy = 0;
-            for (int j = 1; j < num_tasks + 1; j++) // Do not count idle
+            for (int j = 0; j < num_tasks; j++)
             {
-                double p = (double)t_data[i * num_tasks + j] / (num_periods * sim_data->num_cores);
+                double p = (double)t_data[i * num_tasks + j] / (num_periods);
                 if (p > 0)
                     entropy -= p * log2(p);
             }
             total_entropy += entropy;
         }
 
-        // printf("%.2f\n", total_entropy);
+        total_entropy /= processor->m;
+
         *result = total_entropy;
+    }
+
+    if (log_timeslot_data && horizontal)
+    {
+        double entropies[processor->m];
+        int *t_data = sim_data->timeslots;
+        int hyperperiod = sim_data->hyperperiod;
+        int num_periods = sim_data->time / hyperperiod;
+        int num_all_tasks = sim_data->num_tasks + processor->m;
+        
+        for (int i = 0; i < processor->m; i++)
+        {
+            double total_entropy = 0;
+            entropies[i] = 0;
+            TaskGroup* tasks = processor->tasks->task_groups[i];
+            int num_tasks = tasks->num_tasks;
+            int idx_of_idle = i;
+
+            for (int k = 0; k < hyperperiod; k++)   // for every timeslot
+            {
+                double entropy = 0;
+                double p = (double)t_data[k * num_all_tasks + idx_of_idle] / (num_periods);
+                if (p > 0)
+                    entropy -= p * log2(p);
+                
+
+                for (int j = 0; j < num_tasks; j++)
+                {
+                    int idx = tasks->tasks[j]->idx + processor->m;
+                    double p = (double)t_data[k * num_all_tasks + idx] / (num_periods);
+                    if (p > 0)
+                        entropy -= p * log2(p);
+                }
+                total_entropy += entropy;
+                
+            }
+            entropies[i] = total_entropy;
+        }
+
+        double total_combned_entropy = 1;
+        for (int i = 0; i < processor->m; i++)
+        {
+            total_combned_entropy *= entropies[i];
+        }
+        //Take the mth root of the product of the entropies
+        total_combned_entropy = pow(total_combned_entropy, 1.0 / processor->m);
+        *result = total_combned_entropy;
+        
     }
 
     return;

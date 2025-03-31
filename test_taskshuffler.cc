@@ -10,12 +10,6 @@
 #include "feasibility.h"
 #include "priority.h"
 
-Scheduler *init_scheduler_SM(void)
-{
-    Scheduler *scheduler = init_scheduler_ts_custom(&SM);
-    return scheduler;
-}
-
 // Recreating taskshuffler results
 int main(void)
 {
@@ -60,7 +54,7 @@ int main(void)
                         actual_U += tasks_attempt[j]->utilization;
                     }
 
-                    if (RTA(tasks_attempt, n, &SM))
+                    if (RTA(tasks_attempt, n, &RM))
                     {
                         tasks = tasks_attempt;
                         break;
@@ -72,30 +66,28 @@ int main(void)
                     }
                 }
 
-                Processor *processorSM = init_processor_custom(m, &init_scheduler_SM);
                 Processor *processor = init_processor_custom(m, &init_scheduler_ts);
 
                 processor->log_attack_data = 0;
                 processor->log_timeslot_data = 1;
+                processor->horizontal = 1;
                 processor->analyze = &analyze_simulation;
-                processorSM->log_attack_data = 0;
-                processorSM->log_timeslot_data = 1;
-                processorSM->analyze = &analyze_simulation;
 
                 load_tasks(processor, tasks, n, &ff);
-                load_tasks(processorSM, tasks, n, &ff);
 
-                double result;
-                double resultSM;
-                run(processor, hyper_period * 10000, &result);
-                run(processorSM, hyper_period * 10000, &resultSM);
-                // Improvement?
-                double improvement = resultSM / result;
-                printf("n: %d, U: %f, Improvement: %f\n", n, actual_U, improvement);
+                double result[3];
+                run(processor, hyper_period, 10000, result);
+                
+                printf("U=%.2f,", actual_U);
+                printf("n=%d,", n);
+                printf("E=%.3f,", result[0]);
+                printf("\n");
 
                 free_processor(processor);
                 free_tasks(tasks, n);
             }
         }
     }
+
+    return 0;
 }

@@ -5,7 +5,7 @@
 
 #include "simulation.h"
 
-void setup_simulation(Processor *processor, int time)
+void setup_simulation(Processor *processor, int hyperperiod, int num_hyperperiods)
 {
 
     SimulationData *data = malloc(sizeof(SimulationData));
@@ -15,10 +15,12 @@ void setup_simulation(Processor *processor, int time)
         return;
     }
 
+    int time = hyperperiod * num_hyperperiods;
+
     data->schedule = calloc(processor->m * time, sizeof(int *));
     data->num_cores = processor->m;
     data->time = time;
-    data->hyperperiod = calculate_hyperperiod(processor->all_tasks->tasks, processor->all_tasks->num_tasks);
+    data->hyperperiod = hyperperiod;
     data->num_tasks = processor->all_tasks->num_tasks;
 
     int num_tasks = data->num_tasks;
@@ -37,7 +39,7 @@ void setup_simulation(Processor *processor, int time)
     }
 
     // Allocate timeslot data
-    data->timeslots = calloc(data->hyperperiod * (num_tasks + 1), sizeof(int));
+    data->timeslots = calloc(data->hyperperiod * (num_tasks + processor->m), sizeof(int));
 
     processor->simulation = data;
 }
@@ -129,8 +131,8 @@ void log_execution(Processor *processor, int time)
         // Timeslot data
         if (log_timeslot_data)
         {
-            int idx = task->idx + 1;
-            sim_data->timeslots[(time % sim_data->hyperperiod) * sim_data->num_tasks + idx]++;
+            int idx = task->id + processor->m - 1;
+            sim_data->timeslots[(time % sim_data->hyperperiod) * (sim_data->num_tasks + processor->m)+ idx]++;
         }
 
         // Attack Data
