@@ -44,12 +44,12 @@ double sim(int n, int m, Task **tasks, int *allocation)
         printf("\n");
     } */
 
-    double result;
-    run(processor, hyper_period, 1000, &result);
+    double result[3];
+    run(processor, hyper_period, 1000, result);
 
     free_processor(processor);
 
-    return result;
+    return result[0];
 }
 
 // Recursive function to generate unique task assignments
@@ -183,12 +183,12 @@ int main(void)
             printf("\n");
         } */
 
-        double result;
+        double result[3];
         double results[total_assignments + 1];
         int current = 0;
 
-        run(processor, hyper_period, 1000, &result);
-        results[current] = result;
+        run(processor, hyper_period, 1000, result);
+        results[current] = result[0];
         current++;
         double ff = results[0];
         printf("CP1=%.3f\n", ff);
