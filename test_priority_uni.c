@@ -141,7 +141,7 @@ int main(void)
         tasks[j]->id = j + 1; // Assign task IDs
     }
 
-    int feasible = OPA_with_priority(tasks, n, &RRM); // -> RM
+    int feasible = OPA_with_priority(tasks, n, &IU); // 
     if (!feasible)
     {
         free_tasks(tasks, n);
@@ -222,7 +222,7 @@ int main(void)
     double min_h = results_h[0];
      // double min_v = results_v[0];
     double max_h = results_h[current - 1];
-    // double max_v = results_v[current - 1];
+    double max_v = results_v[current - 1];
     double avg_h = 0;
     // double avg_v = 0;
     for (int i = 0; i < current; i++)
@@ -235,7 +235,7 @@ int main(void)
 
     printf("U=%.2f,", actual_U);
     printf("E_h=%.3f,", rm[6] / max_h);
-    // printf("OPARSM_V=%.3f,", rm[7] / max_v);
+    printf("E_v=%.3f,", rm[7] / max_v);
     printf("Med_h=%.3f,", median_h / max_h);
     // printf("Med_v=%.3f,", median_v / max_v);
     printf("Min_h=%.3f,", min_h / max_h);

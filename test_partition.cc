@@ -60,14 +60,14 @@ void generate_allocations(int n, int m, int task, int allocation[], int max_bin,
 {
     if (task == n)
     { // Base case: all tasks assigned
-        /*
+        
         printf("\n[ ");
         for (int i = 0; i < n; i++)
         {
             printf("%d ", allocation[i]);
         }
         printf("]\n");
-        */
+        
         double result[8];
         for (int i = 0; i < 8; i++)
         {
@@ -81,7 +81,7 @@ void generate_allocations(int n, int m, int task, int allocation[], int max_bin,
         results_h[*current] = result[6];
         results_v[*current] = result[7];
         *current = *current + 1;
-        //printf("Result: %.3f\n", result[0]);
+        printf("Result: %.3f\n", result[6]);
         return;
     }
 
@@ -166,8 +166,8 @@ int main(void)
     processor->log_timeslot_data = 1;
     processor->analyze = &analyze_simulation;
 
-    // int load_was_successful = load_tasks_with_algorithm_argument(processor, tasks, n, &ff_50percent_custom, 0.50); 
-    int load_was_successful = load_tasks(processor, tasks, n, &wf); // <- Load tasks with any partitioning algorithm
+    int load_was_successful = load_tasks_with_algorithm_argument(processor, tasks, n, &ff_50percent_custom, 0.50); 
+    // int load_was_successful = load_tasks(processor, tasks, n, &wf); // <- Load tasks with any partitioning algorithm
 
     if (!load_was_successful)
     {
@@ -177,7 +177,7 @@ int main(void)
     }
 
     // print task partition
-    /*for (int i = 0; i < m; i++)
+    for (int i = 0; i < m; i++)
     {
         TaskGroup *group = processor->tasks->task_groups[i];
         printf("Core %d: ", i);
@@ -187,7 +187,7 @@ int main(void)
             printf("%d (T=%d C=%d U=%.2f)\t", group->tasks[j]->id, group->tasks[j]->period, group->tasks[j]->duration, group->tasks[j]->utilization);
         }
         printf("\n");
-    }*/
+    }
 
     double result[8];
     for (int i = 0; i < 8; i++)
@@ -209,7 +209,7 @@ int main(void)
 
     double ff_h = result[6];
     double ff_v = result[7];
-    //printf("CP1=%.3f\n", ff_h);
+    printf("CP1=%.3f\n", ff_h);
     //printf("CP2=%.3f\n", ff_v);
 
     // Do everyting
