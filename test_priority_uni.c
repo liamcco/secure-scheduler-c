@@ -24,7 +24,7 @@ void try_simulation(Task **tasks, int n, double* result)
 {
     Processor *processor = init_processor_custom(1, &init_scheduler_nosort); // Unicore
 
-    processor->log_attack_data = 1;
+    processor->log_attack_data = 0;
     processor->log_timeslot_data = 1;
     processor->analyze = &analyze_simulation; // <- This is the function that calculates the result (experiments.c)
 
@@ -56,7 +56,7 @@ void swap(int *a, int *b)
 }
 
 // Recursive function to generate permutations
-void generate_permutations(int arr[], int start, int n, Task **tasks, double results[], int *current, int best[], double *best_res)
+void generate_permutations(int arr[], int start, int n, Task **tasks, double results_h[], double results_v[], int *current, int best[], double *best_res)
 {
     if (start == n)
     {
@@ -69,21 +69,22 @@ void generate_permutations(int arr[], int start, int n, Task **tasks, double res
         double result[8];
         for (int i = 0; i < 8; i++)
         {
-            result[i] = 0;
+            result[i] = -1;
         }
         try_simulation(tasks_copy, n, result);
-        if (!result[0])
+        if (result[6] == -1)
         {
             free(tasks_copy);
             return;
         }
 
-        results[*current] = result[0];
+        results_h[*current] = result[6];
+        results_v[*current] = result[7];
         *current = *current + 1;
 
-        if (result[0] > *best_res)
+        if (result[7] > *best_res)
         {
-            *best_res = result[0];
+            *best_res = result[7];
             for (int i = 0; i < n; i++)
             {
                 best[i] = arr[i];
@@ -91,6 +92,7 @@ void generate_permutations(int arr[], int start, int n, Task **tasks, double res
         }
 
         free(tasks_copy);
+        // printf("Results: %.2f, %.2f\n", result[6], result[7]);
 
         return;
     }
@@ -101,7 +103,7 @@ void generate_permutations(int arr[], int start, int n, Task **tasks, double res
         swap(&arr[start], &arr[i]);
 
         // Recur for the next position
-        generate_permutations(arr, start + 1, n, tasks, results, current, best, best_res);
+        generate_permutations(arr, start + 1, n, tasks, results_h, results_v, current, best, best_res);
 
         // Backtrack (restore original array)
         swap(&arr[start], &arr[i]);
@@ -124,8 +126,11 @@ int main(void)
     int hyper_period = 3000;
 
     int n = 5;
+
+    for (int u = 2; u < 85; u++) {
+
+    double U = (double)u / 100.0;
     double actual_U;
-    double U = 0.5;
 
     Task **tasks = generate_task_set(n, U, hyper_period, 1, 50);
 
@@ -160,9 +165,7 @@ int main(void)
         rm[i] = 0;
     }
     try_simulation(tasks, n, rm); // Run simulation with RM
-    printf("RM: %.3f\n", rm[0]);
-
-    exit(0);
+    // printf("RM: %.3f, %.3f\n", rm[6], rm[7]);
 
     // Iterate through all possible task priority assignments
 
@@ -182,16 +185,20 @@ int main(void)
     }
 
     int current = 0;
-    double results[num_permutations + 1];
-    results[current] = rm[0];
+    double results_h[num_permutations + 1];
+    double results_v[num_permutations + 1];
+    results_h[current] = rm[6];
+    results_v[current] = rm[7];
     current++;
+
     for (int i = 0; i < num_permutations; i++)
     {
-        results[i + 1] = 0;
+        results_h[i + 1] = 0;
+        results_v[i + 1] = 0;
     }
 
     double best_res = 0;
-    generate_permutations(tasks_arr, 0, n, tasks, results, &current, best, &best_res);
+    generate_permutations(tasks_arr, 0, n, tasks, results_h, results_v, &current, best, &best_res);
 
     /*
     printf("Best result: %f\n", best_res);
@@ -207,24 +214,37 @@ int main(void)
     free_tasks(tasks, n);
 
     // sort results
-    qsort(results, current, sizeof(double), &compare);
+    qsort(results_h, current, sizeof(double), &compare);
+    qsort(results_v, current, sizeof(double), &compare);
 
-    double median = results[current / 2];
-    double min = results[0];
-    double max = results[current - 1];
-    double avg = 0;
+    double median_h = results_h[current / 2];
+    // double median_v = results_v[current / 2];
+    double min_h = results_h[0];
+     // double min_v = results_v[0];
+    double max_h = results_h[current - 1];
+    // double max_v = results_v[current - 1];
+    double avg_h = 0;
+    // double avg_v = 0;
     for (int i = 0; i < current; i++)
     {
-        avg += results[i];
+        avg_h += results_h[i];
+        // avg_v += results_v[i];
     }
-    avg /= current;
+    avg_h /= current;
+    // avg_v /= current;
 
     printf("U=%.2f,", actual_U);
-    printf("OPARSM=%.3f,", rm[0] / max);
-    printf("Med=%.3f,", median / max);
-    printf("Min=%.3f,", min / max);
-    printf("Avg=%.3f", avg / max);
+    printf("E_h=%.3f,", rm[6] / max_h);
+    // printf("OPARSM_V=%.3f,", rm[7] / max_v);
+    printf("Med_h=%.3f,", median_h / max_h);
+    // printf("Med_v=%.3f,", median_v / max_v);
+    printf("Min_h=%.3f,", min_h / max_h);
+    // printf("Min_v=%.3f,", min_v / max_v);
+    printf("Avg_h=%.3f,", avg_h / max_h);
+    // printf("Avg_v=%.3f,", avg_v / max_v);
     printf("\n");
+
+    }
     
     return 0;
 }

@@ -82,7 +82,7 @@ int main(void)
         for (int k = 1; k < n; k++)
         {
 
-            for (int i = 0; i <= k; i++)
+            for (int i = 0; i < k; i++)
             {
                 tasks[i]->trusted = 0;
             }
