@@ -19,7 +19,6 @@ void sim(int n, int m, Task **tasks, int *allocation, double *result)
 
     processor->log_attack_data = 0;
     processor->log_timeslot_data = 1;
-    processor->horizontal = 0;
     processor->analyze = &analyze_simulation;
 
     int load_was_successful = load_tasks_from_allocation(processor, tasks, n, allocation); // Attempts to load task according to given allocation
@@ -57,7 +56,7 @@ void sim(int n, int m, Task **tasks, int *allocation, double *result)
 }
 
 // Recursive function to generate unique task assignments
-void generate_allocations(int n, int m, int task, int allocation[], int max_bin, Task **tasks, double results[], int *current)
+void generate_allocations(int n, int m, int task, int allocation[], int max_bin, Task **tasks, double results_h[], double results_v[], int *current)
 {
     if (task == n)
     { // Base case: all tasks assigned
@@ -69,17 +68,18 @@ void generate_allocations(int n, int m, int task, int allocation[], int max_bin,
         }
         printf("]\n");
         */
-        double result[3];
-        for (int i = 0; i < 3; i++)
+        double result[8];
+        for (int i = 0; i < 8; i++)
         {
-            result[i] = 0;
+            result[i] = -1;
         }
         sim(n, m, tasks, allocation, result);
-        if (result[0] == 0)
+        if (result[6] == -1)
         {
             return;
         }
-        results[*current] = result[0];
+        results_h[*current] = result[6];
+        results_v[*current] = result[7];
         *current = *current + 1;
         //printf("Result: %.3f\n", result[0]);
         return;
@@ -89,15 +89,15 @@ void generate_allocations(int n, int m, int task, int allocation[], int max_bin,
     for (int bin = 1; bin <= max_bin + 1 && bin <= m; bin++)
     {
         allocation[task] = bin;
-        generate_allocations(n, m, task + 1, allocation, (bin > max_bin) ? max_bin + 1 : max_bin, tasks, results, current);
+        generate_allocations(n, m, task + 1, allocation, (bin > max_bin) ? max_bin + 1 : max_bin, tasks, results_h, results_v, current);
     }
 }
 
 // Wrapper function to start recursion
-void generate_unique_allocations(int n, int m, Task **tasks, double results[], int *current)
+void generate_unique_allocations(int n, int m, Task **tasks, double results_h[], double results_v[], int *current)
 {
     int allocation[n]; // Array to store current allocation
-    generate_allocations(n, m, 0, allocation, 0, tasks, results, current);
+    generate_allocations(n, m, 0, allocation, 0, tasks, results_h, results_v, current);
 }
 
 // Function to compute factorial of a number
@@ -144,7 +144,9 @@ int main(void)
     int m = 3; // Number of bins
     long long total_assignments = count_unique_allocations(n, m);
     // printf("Total unique assignments: %lld\n", total_assignments);
-    double U = 0.5;
+    for (int u = 2; u < 81; u++)
+    {
+    double U = (double)u / 100.0;
 
     int hyper_period = 3000;
 
@@ -162,7 +164,6 @@ int main(void)
 
     processor->log_attack_data = 0;
     processor->log_timeslot_data = 1;
-    processor->horizontal = 0;
     processor->analyze = &analyze_simulation;
 
     // int load_was_successful = load_tasks_with_algorithm_argument(processor, tasks, n, &ff_50percent_custom, 0.50); 
@@ -188,47 +189,66 @@ int main(void)
         printf("\n");
     }*/
 
-    double result[3];
-    for (int i = 0; i < 3; i++)
+    double result[8];
+    for (int i = 0; i < 8; i++)
     {
-        result[i] = 0;
+        result[i] = -1;
     }
 
-    double results[total_assignments + 1];
+    double results_h[total_assignments + 1];
+    double results_v[total_assignments + 1];
     int current = 0;
 
     run(processor, hyper_period, 1000, result);
-    results[current] = result[0];
+
+    results_h[current] = result[6];
+    results_v[current] = result[7];
     current++;
 
     free_processor(processor);
 
-    double ff = results[0];
-    printf("CP1=%.3f\n", ff);
+    double ff_h = result[6];
+    double ff_v = result[7];
+    //printf("CP1=%.3f\n", ff_h);
+    //printf("CP2=%.3f\n", ff_v);
 
     // Do everyting
-    generate_unique_allocations(n, m, tasks, results, &current);
+    generate_unique_allocations(n, m, tasks, results_h, results_v, &current);
 
     free_tasks(tasks, n);
 
     // sort results
-    qsort(results, current, sizeof(double), &compare);
+    qsort(results_h, current, sizeof(double), &compare);
+    qsort(results_v, current, sizeof(double), &compare);
 
-    double median = results[current / 2];
-    double min = results[0];
-    double max = results[current - 1];
-    double avg = 0;
+    double median_h = results_h[current / 2];
+    double median_v = results_v[current / 2];
+    double min_h = results_h[0];
+    double min_v = results_v[0];
+    double max_h = results_h[current - 1];
+    double max_v = results_v[current - 1];
+    double avg_h = 0;
+    double avg_v = 0;
     for (int i = 0; i < current; i++)
     {
-        avg += results[i];
+        avg_h += results_h[i];
+        avg_v += results_v[i];
     }
-    avg /= current;
+    avg_h /= current;
+    avg_v /= current;
+
     printf("U=%.2f,", actual_U);
-    printf("CP1=%.3f,", ff / max);
-    printf("Med=%.3f,", median / max);
-    printf("Min=%.3f,", min / max);
-    printf("Avg=%.3f", avg / max);
-    printf("\n\n");
+    printf("E_h=%.3f,", ff_h / max_h);
+    printf("E_V=%.3f,", ff_v / max_v);
+    printf("Med_h=%.3f,", median_h / max_h);
+    printf("Med_v=%.3f,", median_v / max_v);
+    printf("Min_h=%.3f,", min_h / max_h);
+    printf("Min_v=%.3f,", min_v / max_v);
+    printf("Avg_h=%.3f,", avg_h / max_h);
+    printf("Avg_v=%.3f,", avg_v / max_v);
+    printf("\n");
+
+}
 
     return 0;
 }
