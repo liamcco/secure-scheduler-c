@@ -4,19 +4,22 @@
 
 #include "feasibility.h"
 
+
+
 int RTA(Task **tasks, int num_tasks, int (*compare)(const void *, const void *))
 {
     Task **approved_tasks = malloc(num_tasks * sizeof(Task *));
+    for (int i = 0; i < num_tasks; i++)
+    {
+        approved_tasks[i] = tasks[i];
+    }
+
     if (compare)
-        qsort(tasks, num_tasks, sizeof(Task *), compare);
+        qsort(approved_tasks, num_tasks, sizeof(Task *), compare);
 
     for (int i = 0; i < num_tasks; i++)
     {
-        if (response_time(tasks[i], approved_tasks, i))
-        {
-            approved_tasks[i] = tasks[i];
-        }
-        else
+        if (!response_time(tasks[i], approved_tasks, i))
         {
             free(approved_tasks);
             return 0;
@@ -27,7 +30,7 @@ int RTA(Task **tasks, int num_tasks, int (*compare)(const void *, const void *))
     return 1;
 }
 
-int response_time(Task *task, Task **task_set, int num_tasks)
+int response_time(Task *task, Task **hp_set, int num_tasks)
 {
     // printf("Task %d (T=%d): guess=%d WCRT=", task->id, task->period, task->duration);
     int wcrt_guess = task->duration;
@@ -39,7 +42,7 @@ int response_time(Task *task, Task **task_set, int num_tasks)
         wcrt_guess = task->duration + task->max_jitter;
         for (int i = 0; i < num_tasks; i++)
         {
-            Task *t = task_set[i];
+            Task *t = hp_set[i];
             wcrt_guess += ceil((float)(wcrt + t->max_jitter) / (float)t->period) * t->duration;
         }
 
