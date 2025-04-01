@@ -71,21 +71,15 @@ int main(void)
     // random int for id
     
 
-    for (int U = 5; U < 80; U += 15)
+    for (int U = 2; U < 80; U++)
     {
-        int sim_id = rand() % 1000000;
         double u = (double)U / 100;
         Task **tasks = generate_task_set(n, u * m, hyper_period, 1, 50);
-        prioritize(tasks, n, &IU);
+        prioritize(tasks, n, &DU);
         // OPA_with_priority(tasks, n, &DU);
 
-        for (int k = 1; k < n; k++)
-        {
 
-            for (int i = 0; i < k; i++)
-            {
-                tasks[i]->trusted = 0;
-            }
+            tasks[0]->trusted = 0;
 
             double actual_U = 0;
             for (int i = 0; i < n; i++)
@@ -118,8 +112,7 @@ int main(void)
 
             // printf("CP1=%.3f\n", ff);
 
-            printf("k=%d,", k);
-            printf("U=%.3f,", actual_U / (double)m);
+            printf("U=%.2f,", actual_U / (double)m);
             printf("ANT_H=%.3f,", result[0]);
             printf("POS_H=%.3f,", result[1]);
             printf("PIN_H=%.3f,", result[2]);
@@ -128,9 +121,8 @@ int main(void)
             printf("PIN_V=%.3f,", result[5]);
             printf("E_H=%.3f,", result[6]);
             printf("E_V=%.3f,", result[7]);
-            printf("ID=%d,", sim_id);
             printf("\n");
-        }
+
         free_tasks(tasks, n);
     }
 
