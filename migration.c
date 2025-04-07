@@ -22,9 +22,11 @@ void debug_scheduler(Scheduler *scheduler) {
     printf("Scheduler tasks: ");
     for (int i = 0; i < scheduler->num_tasks; i++) {
         Task *task = scheduler->tasks[i];
-        printf("Task %d (total budget = %d, remaining budget = %d)", task->id, task->maximum_inversion_budget, task->remaining_inversion_budget);
+        printf("Task %d (tot bdt = %d, rem. bdgt = %d) ", task->id, task->maximum_inversion_budget, task->remaining_inversion_budget);
     }
-    printf("\nIdle task c_idx=%d\n", scheduler->idle_task->c_idx);
+    // printf("\nIdle task c_idx=%d\n", scheduler->idle_task->c_idx);
+    printf("to_schedule=%d\n", scheduler->to_schedule);
+
 }
 
 void attempt_random_migration(Processor *processor) {
@@ -41,15 +43,15 @@ void attempt_random_migration(Processor *processor) {
 
     // Pick random OTHER core to move the task to
     int new_core = rand() % tasks->num_groups;
-    while (new_core == core) {
-        new_core = rand() % tasks->num_groups;
+    if (new_core == core) {
+        return;
     }
 
     TaskGroup *new_group = tasks->task_groups[new_core];
 
     // Time this line
-    //int migration_is_possible = RTA_test_with(new_group, task, &RM);
-    int migration_is_possible = LL_test_with(new_group, task);
+    int migration_is_possible = RTA_test_with(new_group, task, &RM);
+    //int migration_is_possible = LL_test_with(new_group, task); <--- Does not work with jitter
 
     if (migration_is_possible) {
         // Task can switch. Make the switch
@@ -65,7 +67,6 @@ void attempt_random_migration(Processor *processor) {
 
         load_tasks_core(processor->cores[core], group);
         load_tasks_core(processor->cores[new_core], new_group);
-
     }
 }
 

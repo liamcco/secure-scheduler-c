@@ -156,6 +156,7 @@ void decrement_task_budgets(Scheduler *scheduler)
             scheduler->tasks[i]->remaining_inversion_budget--;
         }
     }
+
 }
 
 void task_completed_ts(Scheduler *scheduler, __attribute__((unused)) Task *task)
@@ -174,6 +175,7 @@ void time_step_scheduler_ts(Scheduler *scheduler)
     // Decrement task budget after we now wich task is going to be executed
     decrement_task_budgets(scheduler);
     scheduler->to_schedule--;
+
 }
 
 int next_schedule_decision_to_be_made(Task **ready_tasks, int idx)
