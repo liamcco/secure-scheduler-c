@@ -20,7 +20,7 @@ Scheduler *init_scheduler_nosort(void)
     return scheduler;
 }
 
-void try_simulation(Task **tasks, int n, double* result)
+int try_simulation(Task **tasks, int n, double* result)
 {
     Processor *processor = init_processor_custom(1, &init_scheduler_nosort); // Unicore
 
@@ -33,7 +33,7 @@ void try_simulation(Task **tasks, int n, double* result)
     if (!load_successful)
     {
         free_processor(processor);
-        return;
+        return 0;
     }
 
     // Reset tasks if task set is to be reused
@@ -45,7 +45,7 @@ void try_simulation(Task **tasks, int n, double* result)
     run(processor, 3000, 1000, result);
 
     free_processor(processor);
-    return;
+    return 1;
 }
 
 void swap(int *a, int *b)
@@ -56,7 +56,7 @@ void swap(int *a, int *b)
 }
 
 // Recursive function to generate permutations
-void generate_permutations(int arr[], int start, int n, Task **tasks, double results_h[], double results_v[], int *current, int best[], double *best_res)
+void generate_permutations(int arr[], int start, int n, Task **tasks, double results_h[], double results_v[], int *current)
 {
     if (start == n)
     {
@@ -71,8 +71,8 @@ void generate_permutations(int arr[], int start, int n, Task **tasks, double res
         {
             result[i] = -1;
         }
-        try_simulation(tasks_copy, n, result);
-        if (result[6] == -1)
+        int success = try_simulation(tasks_copy, n, result);
+        if (!success)
         {
             free(tasks_copy);
             return;
@@ -81,15 +81,6 @@ void generate_permutations(int arr[], int start, int n, Task **tasks, double res
         results_h[*current] = result[6];
         results_v[*current] = result[7];
         *current = *current + 1;
-
-        if (result[7] > *best_res)
-        {
-            *best_res = result[7];
-            for (int i = 0; i < n; i++)
-            {
-                best[i] = arr[i];
-            }
-        }
 
         free(tasks_copy);
         // printf("Results: %.2f, %.2f\n", result[6], result[7]);
@@ -103,7 +94,7 @@ void generate_permutations(int arr[], int start, int n, Task **tasks, double res
         swap(&arr[start], &arr[i]);
 
         // Recur for the next position
-        generate_permutations(arr, start + 1, n, tasks, results_h, results_v, current, best, best_res);
+        generate_permutations(arr, start + 1, n, tasks, results_h, results_v, current);
 
         // Backtrack (restore original array)
         swap(&arr[start], &arr[i]);
@@ -127,6 +118,8 @@ int main(void)
 
     int n = 5;
 
+    printf("n=%d, m=1\n", n);
+
     for (int u = 2; u < 85; u++) {
 
     double U = (double)u / 100.0;
@@ -138,14 +131,13 @@ int main(void)
     for (int j = 0; j < n; j++)
     {
         actual_U += tasks[j]->utilization; // Calculate actual utilization
-        tasks[j]->id = j + 1; // Assign task IDs
     }
 
-    int feasible = OPA_with_priority(tasks, n, &IU); // 
+    int feasible = OPA_with_priority(tasks, n, &RRM); //
     if (!feasible)
     {
         free_tasks(tasks, n);
-        return 0;
+        continue;
     }
 
     /*
@@ -159,22 +151,12 @@ int main(void)
     }
     */
 
-    double rm[8];
-    for (int i = 0; i < 8; i++)
-    {
-        rm[i] = 0;
-    }
-    try_simulation(tasks, n, rm); // Run simulation with RM
-    // printf("RM: %.3f, %.3f\n", rm[6], rm[7]);
-
     // Iterate through all possible task priority assignments
 
     int tasks_arr[n];
-    int best[n];
     for (int i = 0; i < n; i++)
     {
         tasks_arr[i] = i;
-        best[i] = i;
     }
 
     int num_permutations; // = factorial(n);
@@ -185,20 +167,10 @@ int main(void)
     }
 
     int current = 0;
-    double results_h[num_permutations + 1];
-    double results_v[num_permutations + 1];
-    results_h[current] = rm[6];
-    results_v[current] = rm[7];
-    current++;
+    double results_h[num_permutations];
+    double results_v[num_permutations];
 
-    for (int i = 0; i < num_permutations; i++)
-    {
-        results_h[i + 1] = 0;
-        results_v[i + 1] = 0;
-    }
-
-    double best_res = 0;
-    generate_permutations(tasks_arr, 0, n, tasks, results_h, results_v, &current, best, &best_res);
+    generate_permutations(tasks_arr, 0, n, tasks, results_h, results_v, &current);
 
     /*
     printf("Best result: %f\n", best_res);
@@ -211,38 +183,82 @@ int main(void)
     }
     */
 
-    free_tasks(tasks, n);
-
     // sort results
     qsort(results_h, current, sizeof(double), &compare);
     qsort(results_v, current, sizeof(double), &compare);
 
-    double median_h = results_h[current / 2];
-    // double median_v = results_v[current / 2];
     double min_h = results_h[0];
-     // double min_v = results_v[0];
+    //double min_v = results_v[0];
     double max_h = results_h[current - 1];
-    double max_v = results_v[current - 1];
+    //double max_v = results_v[current - 1];
     double avg_h = 0;
-    // double avg_v = 0;
+    //double avg_v = 0;
     for (int i = 0; i < current; i++)
     {
         avg_h += results_h[i];
-        // avg_v += results_v[i];
+        //avg_v += results_v[i];
     }
     avg_h /= current;
-    // avg_v /= current;
+    //avg_v /= current;
 
     printf("U=%.2f,", actual_U);
-    printf("E_h=%.3f,", rm[6] / max_h);
-    printf("E_v=%.3f,", rm[7] / max_v);
-    printf("Med_h=%.3f,", median_h / max_h);
-    // printf("Med_v=%.3f,", median_v / max_v);
     printf("Min_h=%.3f,", min_h / max_h);
-    // printf("Min_v=%.3f,", min_v / max_v);
+    //printf("Min_v=%.3f,", min_v / max_v);
     printf("Avg_h=%.3f,", avg_h / max_h);
-    // printf("Avg_v=%.3f,", avg_v / max_v);
+    //printf("Avg_v=%.3f,", avg_v / max_v);
+
+
+    double result[8];
+    for (int i = 0; i < 8; i++)
+    {
+        result[i] = 0;
+    }
+
+    // order tasks
+    prioritize(tasks, n, &RM);
+    // run simulation with RM
+    int success = try_simulation(tasks, n, result); // Run simulation with RM
+    if (success)
+    {
+        printf("RM_h=%.3f,", result[6] / max_h);
+        //printf("RM_v=%.3f,", result[7] / max_v);
+    }
+
+    OPA_with_priority(tasks, n, &IU);
+    success = try_simulation(tasks, n, result); // Run simulation with IU
+    if (success)
+    {
+        printf("IU_h=%.3f,", result[6] / max_h);
+        //printf("IU_v=%.3f,", result[7] / max_v);
+    }
+
+    OPA_with_priority(tasks, n, &DU);
+    success = try_simulation(tasks, n, result); // Run simulation with DU
+    if (success)
+    {
+        printf("DU_h=%.3f,", result[6] / max_h);
+        //printf("DU_v=%.3f,", result[7] / max_v);
+    }
+
+    OPA_with_priority(tasks, n, &SM);
+    success = try_simulation(tasks, n, result); // Run simulation with SM
+    if (success)
+    {
+        printf("SM_h=%.3f,", result[6] / max_h);
+        //printf("SM_v=%.3f,", result[7] / max_v);
+    }
+
+    OPA_with_priority(tasks, n, &RSM);
+    success = try_simulation(tasks, n, result); // Run simulation with RSM
+    if (success)
+    {
+        printf("RSM_h=%.3f,", result[6] / max_h);
+        //printf("RSM_v=%.3f,", result[7] / max_v);
+    }
+
+
     printf("\n");
+    free_tasks(tasks, n);
 
     }
     
