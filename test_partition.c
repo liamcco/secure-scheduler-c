@@ -152,9 +152,14 @@ int sim_partition(Task **tasks, int n, int m, double *result, Partition *(*parti
         return 0;
     }
 
+    for (int i = 0; i < n; i++)
+    {
+        reset(tasks[i]);
+    }
     // Run simulation
     run(processor, 3000, 1000, result);
     //printf("Result: %.3f\n", result[6]);
+    // Reset tasks
 
     free_processor(processor);
     return 1;
@@ -211,7 +216,7 @@ int main(void)
     if (current == 0)
     {
         free_tasks(tasks, n);
-        return 0;
+        continue;
     }
 
     // sort results

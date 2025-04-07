@@ -94,7 +94,7 @@ int LL_test_with(TaskGroup *group, Task *task)
     }
     total_U += task->utilization;
 
-    int feasible = total_U < num_tasks*(pow(2,(1.0/(double)num_tasks))-1);
+    int feasible = total_U < (num_tasks+1)*(pow(2,(1.0/(double)(num_tasks+1)))-1);
 
     return feasible;
 }

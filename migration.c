@@ -12,7 +12,7 @@ void debug_partition(Partition *tasks) {
         Task **core_tasks = tasks->task_groups[m]->tasks;
         for (int i = 0; i < tasks->task_groups[m]->num_tasks; i++) {
             Task *task = core_tasks[i];
-            printf("Task %d ", task->id);
+            printf("Task %d (T=%d C=%d U=%.2f) ", task->id, task->period, task->duration, task->utilization);
         }
         printf("\n");
     }
