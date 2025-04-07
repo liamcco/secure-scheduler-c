@@ -220,7 +220,7 @@ int main(void)
     int success = try_simulation(tasks, n, result); // Run simulation with RM
     if (success)
     {
-        printf("RM_h=%.3f,", result[6] / max_h);
+        printf("RM=%.3f,", result[6] / max_h);
         //printf("RM_v=%.3f,", result[7] / max_v);
     }
 
@@ -228,7 +228,7 @@ int main(void)
     success = try_simulation(tasks, n, result); // Run simulation with IU
     if (success)
     {
-        printf("IU_h=%.3f,", result[6] / max_h);
+        printf("IU=%.3f,", result[6] / max_h);
         //printf("IU_v=%.3f,", result[7] / max_v);
     }
 
@@ -236,7 +236,7 @@ int main(void)
     success = try_simulation(tasks, n, result); // Run simulation with DU
     if (success)
     {
-        printf("DU_h=%.3f,", result[6] / max_h);
+        printf("DU=%.3f,", result[6] / max_h);
         //printf("DU_v=%.3f,", result[7] / max_v);
     }
 
@@ -244,7 +244,7 @@ int main(void)
     success = try_simulation(tasks, n, result); // Run simulation with SM
     if (success)
     {
-        printf("SM_h=%.3f,", result[6] / max_h);
+        printf("SM=%.3f,", result[6] / max_h);
         //printf("SM_v=%.3f,", result[7] / max_v);
     }
 
@@ -252,7 +252,7 @@ int main(void)
     success = try_simulation(tasks, n, result); // Run simulation with RSM
     if (success)
     {
-        printf("RSM_h=%.3f,", result[6] / max_h);
+        printf("RSM=%.3f,", result[6] / max_h);
         //printf("RSM_v=%.3f,", result[7] / max_v);
     }
 
