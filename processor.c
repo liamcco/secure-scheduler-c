@@ -185,11 +185,11 @@ int run(Processor *processor, int hyperperiod, int num_hyperperiods, double *res
     int time = hyperperiod * num_hyperperiods;
 
     for (int t = 0; t < time; t++)
-    {
+    {        
         prepare_tasks_processor(processor);
         log_execution(processor, t);
         time_step_processor(processor);
-        if (t % hyperperiod == 0 && processor->migration) {
+        if (t % hyperperiod == hyperperiod - 1 && processor->migration) {
             random_migration(processor);
         }
     }

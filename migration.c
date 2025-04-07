@@ -12,7 +12,7 @@ void debug_partition(Partition *tasks) {
         Task **core_tasks = tasks->task_groups[m]->tasks;
         for (int i = 0; i < tasks->task_groups[m]->num_tasks; i++) {
             Task *task = core_tasks[i];
-            printf("Task %d (T=%d C=%d U=%.2f) ", task->id, task->period, task->duration, task->utilization);
+            printf("Task %d (T=%d C=%d U=%.2f R=%d) ", task->id, task->period, task->duration, task->utilization, task->remaining_deadline==task->time_until_next_period);
         }
         printf("\n");
     }
@@ -22,7 +22,7 @@ void debug_scheduler(Scheduler *scheduler) {
     printf("Scheduler tasks: ");
     for (int i = 0; i < scheduler->num_tasks; i++) {
         Task *task = scheduler->tasks[i];
-        printf("Task %d ", task->id);
+        printf("Task %d (total budget = %d, remaining budget = %d)", task->id, task->maximum_inversion_budget, task->remaining_inversion_budget);
     }
     printf("\nIdle task c_idx=%d\n", scheduler->idle_task->c_idx);
 }

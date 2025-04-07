@@ -55,6 +55,5 @@ void reset_task(Task *task);
 int execute_task(Task *task);
 int time_step_task(Task *task);
 int gcd(int a, int b);
-int calculate_hyperperiod(Task **tasks, int numTasks);
 
 #endif // TASK_H

@@ -175,7 +175,7 @@ int main(void)
     long long total_assignments = count_unique_allocations(n, m);
     //printf("Total unique assignments: %lld\n", total_assignments);
     printf("n=%d,m=%d,Total unique assignments: %lld\n", n, m, total_assignments);
-    for (int u = 2; u < 81; u++)
+    for (int u = 40; u < 81; u++)
     {
     double U = (double)u / 100.0;
     int hyper_period = 3000;

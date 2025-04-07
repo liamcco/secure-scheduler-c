@@ -9,11 +9,6 @@ void setup_simulation(Processor *processor, int hyperperiod, int num_hyperperiod
 {
 
     SimulationData *data = malloc(sizeof(SimulationData));
-    if (!data)
-    {
-        printf("Error: Memory allocation failed for SimulationData\n");
-        return;
-    }
 
     int time = hyperperiod * num_hyperperiods;
 
@@ -116,14 +111,14 @@ void log_execution(Processor *processor, int time)
     Task **tasks = processor->all_tasks->tasks;
     int num_tasks = processor->all_tasks->num_tasks;
 
-    // printf("\n%d:\t", time);
+    //printf("\n%d:\t", time);
 
     // Enter Schedule
     for (int i = 0; i < processor->m; i++)
     {
         // Schedule
         Task *task = processor->ready_tasks[i];
-        // printf("%d\t", task->id);
+        //printf("%d\t", task->id);
 
         if (log_schedule)
             sim_data->schedule[time + i] = task->id;

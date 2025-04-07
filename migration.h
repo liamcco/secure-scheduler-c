@@ -5,6 +5,7 @@
 
 void random_migration(Processor *processor);
 void debug_partition(Partition *tasks);
+void debug_scheduler(Scheduler *scheduler);
 
 #endif // MIGRATION_H
 
