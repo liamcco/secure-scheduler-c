@@ -19,6 +19,7 @@ void sim_allocation(int n, int m, Task **tasks, int *allocation, double *result)
 
     processor->log_attack_data = 0;
     processor->log_timeslot_data = 1;
+    processor->migration = 1;
     processor->analyze = &analyze_simulation;
 
     int load_was_successful = load_tasks_from_allocation(processor, tasks, n, allocation); // Attempts to load task according to given allocation
@@ -139,6 +140,7 @@ int sim_partition(Task **tasks, int n, int m, double *result, Partition *(*parti
     Processor *processor = init_processor_custom(m, &init_scheduler_ts);
     processor->log_attack_data = 0;
     processor->log_timeslot_data = 1;
+    processor->migration = 1;
     processor->analyze = &analyze_simulation;
 
     // Load tasks according to the given allocation

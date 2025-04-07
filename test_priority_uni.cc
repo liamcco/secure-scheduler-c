@@ -256,7 +256,6 @@ int main(void)
         //printf("RSM_v=%.3f,", result[7] / max_v);
     }
 
-
     printf("\n");
     free_tasks(tasks, n);
 
