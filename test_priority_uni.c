@@ -116,7 +116,7 @@ int main(void)
 
     int hyper_period = 3000;
 
-    int n = 5;
+    int n = 6;
 
     printf("n=%d, m=1\n", n);
 
