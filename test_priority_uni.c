@@ -215,7 +215,7 @@ int main(void)
     }
 
     // order tasks
-    prioritize(tasks, n, &RM);
+    OPA_with_priority(tasks, n, &RRM);
     // run simulation with RM
     int success = try_simulation(tasks, n, result); // Run simulation with RM
     if (success)
