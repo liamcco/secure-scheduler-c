@@ -3,11 +3,13 @@
 #include <stdio.h>
 
 #include "feasibility.h"
+#include "math.h"
 
 
 
 int RTA(Task **tasks, int num_tasks, int (*compare)(const void *, const void *))
 {
+
     Task **approved_tasks = malloc(num_tasks * sizeof(Task *));
     for (int i = 0; i < num_tasks; i++)
     {
@@ -17,9 +19,10 @@ int RTA(Task **tasks, int num_tasks, int (*compare)(const void *, const void *))
     if (compare)
         qsort(approved_tasks, num_tasks, sizeof(Task *), compare);
 
+
     for (int i = 0; i < num_tasks; i++)
     {
-        if (!response_time(tasks[i], approved_tasks, i))
+        if (!response_time(approved_tasks[i], approved_tasks, i))
         {
             free(approved_tasks);
             return 0;
@@ -32,7 +35,7 @@ int RTA(Task **tasks, int num_tasks, int (*compare)(const void *, const void *))
 
 int response_time(Task *task, Task **hp_set, int num_tasks)
 {
-    // printf("Task %d (T=%d): guess=%d WCRT=", task->id, task->period, task->duration);
+    //printf("Task %d (T=%d): guess=%d WCRT=", task->id, task->period, task->duration);
     int wcrt_guess = task->duration;
     int wcrt;
 
@@ -48,7 +51,7 @@ int response_time(Task *task, Task **hp_set, int num_tasks)
 
         if (wcrt_guess > task->deadline)
         {
-            // printf(">%d\n", wcrt_guess);
+            //printf(">%d\n", wcrt_guess);
             return 0;
         }
 
@@ -58,7 +61,7 @@ int response_time(Task *task, Task **hp_set, int num_tasks)
         }
     }
 
-    // printf("%d\n", wcrt);
+    //printf("%d\n", wcrt);
     return wcrt;
 }
 
@@ -76,5 +79,22 @@ int RTA_test_with(TaskGroup *group, Task *task, int (*compare)(const void *, con
 
     int feasible = RTA(tasks_copy, num_tasks + 1, compare);
     free(tasks_copy);
+    return feasible;
+}
+
+
+int LL_test_with(TaskGroup *group, Task *task)
+{
+    Task **tasks = group->tasks;
+    int num_tasks = group->num_tasks;
+
+    double total_U = 0;
+    for (int i = 0; i < num_tasks; i++) {
+        total_U += tasks[i]->utilization;
+    }
+    total_U += task->utilization;
+
+    int feasible = total_U < num_tasks*(pow(2,(1.0/(double)num_tasks))-1);
+
     return feasible;
 }

@@ -11,7 +11,7 @@
 #include "priority.h"
 
 // Litmus test
-void sim(int n, int m, Task **tasks, int *allocation, double *result)
+void sim_allocation(int n, int m, Task **tasks, int *allocation, double *result)
 {
     int hyper_period = 3000;
 
@@ -61,27 +61,31 @@ void generate_allocations(int n, int m, int task, int allocation[], int max_bin,
     if (task == n)
     { // Base case: all tasks assigned
         
-        printf("\n[ ");
+        /*printf("\n[ ");
         for (int i = 0; i < n; i++)
         {
             printf("%d ", allocation[i]);
         }
-        printf("]\n");
+        printf("]\n"); */
+        
         
         double result[8];
         for (int i = 0; i < 8; i++)
         {
             result[i] = -1;
         }
-        sim(n, m, tasks, allocation, result);
+
+        sim_allocation(n, m, tasks, allocation, result);
+
         if (result[6] == -1)
         {
             return;
         }
+
         results_h[*current] = result[6];
         results_v[*current] = result[7];
         *current = *current + 1;
-        printf("Result: %.3f\n", result[6]);
+        //printf("Result: %.3f\n", result[6]);
         return;
     }
 
@@ -100,32 +104,26 @@ void generate_unique_allocations(int n, int m, Task **tasks, double results_h[],
     generate_allocations(n, m, 0, allocation, 0, tasks, results_h, results_v, current);
 }
 
-// Function to compute factorial of a number
-long long factorial(int x)
+// Stirling numbers of the second kind using dynamic programming
+long long stirling(int n, int k)
 {
-    long long result = 1;
-    for (int i = 2; i <= x; i++)
-    {
-        result *= i;
-    }
-    return result;
+    if (n == k || k == 1)
+        return 1;
+    if (k > n)
+        return 0;
+
+    return k * stirling(n - 1, k) + stirling(n - 1, k - 1);
 }
 
-// Function to compute T(n, m) = (m^n) / m!
+// Total number of unique assignments
 long long count_unique_allocations(int n, int m)
 {
-    if (m > n)
-        m = n; // More bins than tasks is redundant
-    long long total_assignments = 1;
-
-    // Compute m^n (total assignments without considering bin symmetry)
-    for (int i = 0; i < n; i++)
+    long long total = 0;
+    for (int k = 1; k <= m; k++)
     {
-        total_assignments *= m;
+        total += stirling(n, k);
     }
-
-    // Divide by m! to account for interchangeable bins
-    return total_assignments / factorial(m);
+    return total;
 }
 
 // Comparison function for qsort
@@ -133,6 +131,31 @@ int compare(const void *a, const void *b)
 {
     double diff = *(double *)a - *(double *)b;
     return (diff > 0) - (diff < 0); // Returns -1, 0, or 1
+}
+
+int sim_partition(Task **tasks, int n, int m, double *result, Partition *(*partition_algorithm)(Task **, int, int), int (*compare)(const void *, const void *))
+{
+    // Initialize processor and load tasks
+    Processor *processor = init_processor_custom(m, &init_scheduler_ts);
+    processor->log_attack_data = 0;
+    processor->log_timeslot_data = 1;
+    processor->analyze = &analyze_simulation;
+
+    // Load tasks according to the given allocation
+    prioritize(tasks, n, compare);
+    int load_was_successful = load_tasks(processor, tasks, n, partition_algorithm);
+    if (!load_was_successful)
+    {
+        free_processor(processor);
+        return 0;
+    }
+
+    // Run simulation
+    run(processor, 3000, 1000, result);
+    //printf("Result: %.3f\n", result[6]);
+
+    free_processor(processor);
+    return 1;
 }
 
 // Example usage
@@ -143,41 +166,22 @@ int main(void)
     int n = 5; // Number of tasks
     int m = 3; // Number of bins
     long long total_assignments = count_unique_allocations(n, m);
-    // printf("Total unique assignments: %lld\n", total_assignments);
+    //printf("Total unique assignments: %lld\n", total_assignments);
+    printf("n=%d,m=%d,Total unique assignments: %lld\n", n, m, total_assignments);
     for (int u = 2; u < 81; u++)
     {
     double U = (double)u / 100.0;
-
     int hyper_period = 3000;
 
     Task **tasks = generate_task_set(n, U * m, hyper_period, 1, 50);
-    prioritize(tasks, n, &IU); // <- choose order in which to assign tasks (can also happen in your partitioning algorithm)
-
     double actual_U = 0;
     for (int i = 0; i < n; i++)
     {
         actual_U += tasks[i]->utilization;
     }
 
-    // compare with WF-DU
-    Processor *processor = init_processor_custom(m, &init_scheduler_ts);
-
-    processor->log_attack_data = 0;
-    processor->log_timeslot_data = 1;
-    processor->analyze = &analyze_simulation;
-
-    int load_was_successful = load_tasks_with_algorithm_argument(processor, tasks, n, &ff_50percent_custom, 0.50); 
-    // int load_was_successful = load_tasks(processor, tasks, n, &wf); // <- Load tasks with any partitioning algorithm
-
-    if (!load_was_successful)
-    {
-        free_processor(processor);
-        free_tasks(tasks, n);
-        return 0;
-    }
-
     // print task partition
-    for (int i = 0; i < m; i++)
+    /*for (int i = 0; i < m; i++)
     {
         TaskGroup *group = processor->tasks->task_groups[i];
         printf("Core %d: ", i);
@@ -187,46 +191,35 @@ int main(void)
             printf("%d (T=%d C=%d U=%.2f)\t", group->tasks[j]->id, group->tasks[j]->period, group->tasks[j]->duration, group->tasks[j]->utilization);
         }
         printf("\n");
-    }
+    } */
 
     double result[8];
     for (int i = 0; i < 8; i++)
     {
-        result[i] = -1;
+        result[i] = 0;
     }
 
-    double results_h[total_assignments + 1];
-    double results_v[total_assignments + 1];
+    double results_h[total_assignments];
+    double results_v[total_assignments];
     int current = 0;
-
-    run(processor, hyper_period, 1000, result);
-
-    results_h[current] = result[6];
-    results_v[current] = result[7];
-    current++;
-
-    free_processor(processor);
-
-    double ff_h = result[6];
-    double ff_v = result[7];
-    printf("CP1=%.3f\n", ff_h);
-    //printf("CP2=%.3f\n", ff_v);
 
     // Do everyting
     generate_unique_allocations(n, m, tasks, results_h, results_v, &current);
 
-    free_tasks(tasks, n);
+    if (current == 0)
+    {
+        free_tasks(tasks, n);
+        return 0;
+    }
 
     // sort results
     qsort(results_h, current, sizeof(double), &compare);
     qsort(results_v, current, sizeof(double), &compare);
-
-    double median_h = results_h[current / 2];
-    double median_v = results_v[current / 2];
+    
     double min_h = results_h[0];
     double min_v = results_v[0];
-    double max_h = results_h[current - 1];
-    double max_v = results_v[current - 1];
+    double max_h = results_h[current-1];
+    double max_v = results_v[current-1];
     double avg_h = 0;
     double avg_v = 0;
     for (int i = 0; i < current; i++)
@@ -238,17 +231,61 @@ int main(void)
     avg_v /= current;
 
     printf("U=%.2f,", actual_U);
-    printf("E_h=%.3f,", ff_h / max_h);
-    printf("E_V=%.3f,", ff_v / max_v);
-    printf("Med_h=%.3f,", median_h / max_h);
-    printf("Med_v=%.3f,", median_v / max_v);
     printf("Min_h=%.3f,", min_h / max_h);
     printf("Min_v=%.3f,", min_v / max_v);
     printf("Avg_h=%.3f,", avg_h / max_h);
     printf("Avg_v=%.3f,", avg_v / max_v);
+
+    int success = sim_partition(tasks, n, m, result, &wf, &RM);
+    if (success) {
+        printf("WF-RM_h=%.3f,", result[6] / max_h);
+        printf("WF-RM_v=%.3f,", result[7] / max_v);
+    }
+    success = sim_partition(tasks, n, m, result, &bf, &RM);
+    if (success) {
+        printf("BF-RM_h=%.3f,", result[6] / max_h);
+        printf("BF-RM_v=%.3f,", result[7] / max_v);
+    }
+    success = sim_partition(tasks, n, m, result, &wf, &IU);
+    if (success) {
+        printf("WF-IU_h=%.3f,", result[6] / max_h);
+        printf("WF-IU_v=%.3f,", result[7] / max_v);
+    }
+    success = sim_partition(tasks, n, m, result, &bf, &IU);
+    if (success) {
+        printf("BF-IU_h=%.3f,", result[6] / max_h);
+        printf("BF-IU_v=%.3f,", result[7] / max_v);
+    }
+    success = sim_partition(tasks, n, m, result, &wf, &DU);
+    if (success) {
+        printf("WF-DU_h=%.3f,", result[6] / max_h);
+        printf("WF-DU_v=%.3f,", result[7] / max_v);
+    }
+    success = sim_partition(tasks, n, m, result, &bf, &DU);
+    if (success) {
+        printf("BF-DU_h=%.3f,", result[6] / max_h);
+        printf("BF-DU_v=%.3f,", result[7] / max_v);
+    }
+    success = sim_partition(tasks, n, m, result, &ff, &RM);
+    if (success) {
+        printf("FF-RM_h=%.3f,", result[6] / max_h);
+        printf("FF-RM_v=%.3f,", result[7] / max_v);
+    }
+    success = sim_partition(tasks, n, m, result, &ff, &IU);
+    if (success) {
+        printf("FF-IU_h=%.3f,", result[6] / max_h);
+        printf("FF-IU_v=%.3f,", result[7] / max_v);
+    }
+    success = sim_partition(tasks, n, m, result, &ff, &DU);
+    if (success) {
+        printf("FF-DU_h=%.3f,", result[6] / max_h);
+        printf("FF-DU_v=%.3f,", result[7] / max_v);
+    }
+
+    free_tasks(tasks, n);
     printf("\n");
 
-}
+    }
 
     return 0;
 }

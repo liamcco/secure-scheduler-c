@@ -9,7 +9,6 @@ typedef struct Scheduler
 {
     int hyperperiod;
     Task **tasks;
-    Task **ready_tasks;
     int num_tasks;
     Task *idle_task;
 

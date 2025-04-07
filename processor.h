@@ -13,6 +13,7 @@ typedef struct SimulationData SimulationData;
 typedef struct Processor
 {
     Partition *tasks;
+    int migration;
 
     TaskGroup *all_tasks;
 

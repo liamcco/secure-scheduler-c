@@ -6,6 +6,7 @@
 #include "simulation.h"
 #include "priority.h"
 #include "simulation.h"
+#include "migration.h"
 
 Processor *init_processor(int m)
 {
@@ -27,6 +28,8 @@ Processor *init_processor_custom(int m, Scheduler *(*init_scheduler)(void))
 
     processor->tasks = NULL;
     processor->all_tasks = NULL;
+
+    processor->migration = 0;
 
     processor->log_schedule = 0;
     processor->log_attack_data = 0;
@@ -102,7 +105,7 @@ int load_tasks(
     for (int i = 0; i < processor->m; i++)
     {
         TaskGroup *group = processor->tasks->task_groups[i];
-        load_tasks_core(processor->cores[i], group->tasks, group->num_tasks);
+        load_tasks_core(processor->cores[i], group);
     }
 
     return 1;
@@ -136,7 +139,7 @@ int load_tasks_with_algorithm_argument(
     for (int i = 0; i < processor->m; i++)
     {
         TaskGroup *group = processor->tasks->task_groups[i];
-        load_tasks_core(processor->cores[i], group->tasks, group->num_tasks);
+        load_tasks_core(processor->cores[i], group);
     }
 
     return 1;
@@ -158,7 +161,6 @@ int load_tasks_from_allocation(
     }
     // Partition the tasks
     Partition *partitioned_tasks = partition_from_allocation(tasks, num_tasks, processor->m, allocation);
-
     if (!check_partition(partitioned_tasks, num_tasks))
     {
         return 0;
@@ -170,7 +172,7 @@ int load_tasks_from_allocation(
     for (int i = 0; i < processor->m; i++)
     {
         TaskGroup *group = processor->tasks->task_groups[i];
-        load_tasks_core(processor->cores[i], group->tasks, group->num_tasks);
+        load_tasks_core(processor->cores[i], group);
     }
 
     return 1;
@@ -187,6 +189,9 @@ int run(Processor *processor, int hyperperiod, int num_hyperperiods, double *res
         prepare_tasks_processor(processor);
         log_execution(processor, t);
         time_step_processor(processor);
+        if (t % hyperperiod == 0 && processor->migration) {
+            random_migration(processor);
+        }
     }
 
     if (processor->log_attack_data)

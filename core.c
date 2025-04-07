@@ -21,19 +21,17 @@ void free_core(Core *core)
     free(core);
 }
 
-void load_tasks_core(Core *core, Task **tasks, int num_tasks)
+void load_tasks_core(Core *core, TaskGroup *group)
 {
-    core->tasks = tasks;
-    core->num_tasks = num_tasks;
+    core->group = group;
 
-    for (int i = 0; i < num_tasks; i++)
+    for (int i = 0; i < group->num_tasks; i++)
     {
-        tasks[i]->c_id = core->core_id;
+        group->tasks[i]->c_id = core->core_id;
     }
 
-    load_tasks_scheduler(core->scheduler, tasks, num_tasks);
+    load_tasks_scheduler(core->scheduler, group->tasks, group->num_tasks);
 }
-
 Task *load_next_task(Core *core)
 {
     Task *selected_task = schedule_task(core->scheduler);
@@ -54,9 +52,9 @@ void execute_core(Core *core)
 void debug(Core *core)
 {
     printf("Core %d:\n", core->core_id);
-    for (int j = 0; j < core->num_tasks; j++)
+    for (int j = 0; j < core->group->num_tasks; j++)
     {
-        Task *task = core->tasks[j];
+        Task *task = core->group->tasks[j];
         printf("Task %d: T=%d C=%d F=%d\n", task->id, task->period, task->duration, task->max_jitter);
     }
 
@@ -69,11 +67,11 @@ void time_step_core(Core *core)
     time_step_scheduler(core->scheduler);
 
     execute_core(core);
-    for (int i = 0; i < core->num_tasks; i++)
+    for (int i = 0; i < core->group->num_tasks; i++)
     {
-        if (time_step_task(core->tasks[i]))
+        if (time_step_task(core->group->tasks[i]))
         {
-            task_arrived(core->scheduler, core->tasks[i]);
+            task_arrived(core->scheduler, core->group->tasks[i]);
         }
     }
 }

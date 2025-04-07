@@ -11,7 +11,6 @@ Scheduler *init_scheduler_fp(void)
     scheduler->idle_task = init_idle_task();
 
     scheduler->compare = &RM;
-    scheduler->ready_tasks = NULL;
     scheduler->previous_task = NULL;
 
     scheduler->schedule_task = &schedule_task_fp;
@@ -33,9 +32,6 @@ Scheduler *init_scheduler_fp_custom(int (*comp)(const void *, const void *))
 void free_scheduler(Scheduler *scheduler)
 {
     free(scheduler->idle_task);
-    if (scheduler->ready_tasks)
-        free(scheduler->ready_tasks);
-
     free(scheduler);
 }
 

@@ -358,6 +358,8 @@ Partition *even2(Task **tasks, int num_tasks, int m, int limit)
 
 Partition *partition_from_allocation(Task **tasks, int num_tasks, int m, int *allocation)
 {
+
+
     // Create partition with m groups
     Partition *partition = init_partition(num_tasks, m);
 

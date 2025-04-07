@@ -15,7 +15,6 @@ Scheduler *init_scheduler_ts(void)
 
     scheduler->idle_task = init_idle_task();
     scheduler->to_schedule = 0;
-    scheduler->ready_tasks = NULL;
     scheduler->previous_task = NULL;
 
     scheduler->schedule_task = &schedule_task_ts;
@@ -39,8 +38,8 @@ void load_tasks_scheduler_ts(Scheduler *scheduler, Task **tasks, int num_tasks)
     scheduler->tasks = tasks;
     scheduler->num_tasks = num_tasks;
     scheduler->idle_task->c_idx = num_tasks;
+    scheduler->to_schedule = 0;
 
-    scheduler->ready_tasks = (Task **)malloc(sizeof(Task *) * num_tasks);
     if (scheduler->compare)
         prioritize(tasks, num_tasks, scheduler->compare);
 
@@ -69,12 +68,13 @@ Task *schedule_task_ts(Scheduler *scheduler)
 Task *pick_task(Scheduler *scheduler)
 {
     // Tasks ready for execution
+    Task *ready_tasks[scheduler->num_tasks];
     int num_ready_tasks = 0;
     for (int i = 0; i < scheduler->num_tasks; i++)
     {
         if (is_ready(scheduler->tasks[i]))
         {
-            scheduler->ready_tasks[num_ready_tasks] = scheduler->tasks[i];
+            ready_tasks[num_ready_tasks] = scheduler->tasks[i];
             num_ready_tasks++;
         }
     }
@@ -87,7 +87,7 @@ Task *pick_task(Scheduler *scheduler)
     }
 
     // Select the first task
-    Task *selection = scheduler->ready_tasks[0];
+    Task *selection = ready_tasks[0];
 
     // Can we afford to select any other task?
     if (selection->remaining_inversion_budget <= 0)
@@ -108,11 +108,11 @@ Task *pick_task(Scheduler *scheduler)
 
     for (int i = 1; i < num_ready_tasks; i++)
     {
-        if (scheduler->ready_tasks[i]->c_idx <= m1)
+        if (ready_tasks[i]->c_idx <= m1)
         {
             tasks_to_consider++;
         }
-        if (scheduler->ready_tasks[i]->remaining_inversion_budget <= 0)
+        if (ready_tasks[i]->remaining_inversion_budget <= 0)
         {
             consider_idle_task = 0;
             break;
@@ -123,7 +123,7 @@ Task *pick_task(Scheduler *scheduler)
     int idx = rand() % (tasks_to_consider + consider_idle_task);
     if (idx < tasks_to_consider)
     {
-        selection = scheduler->ready_tasks[idx];
+        selection = ready_tasks[idx];
     }
     else
     {
@@ -137,11 +137,11 @@ Task *pick_task(Scheduler *scheduler)
     }
     else if (idx == tasks_to_consider)
     {
-        scheduler->to_schedule = next_schedule_decision_to_be_made_idle(scheduler->ready_tasks, num_ready_tasks);
+        scheduler->to_schedule = next_schedule_decision_to_be_made_idle(ready_tasks, num_ready_tasks);
     }
     else
     {
-        scheduler->to_schedule = next_schedule_decision_to_be_made(scheduler->ready_tasks, idx);
+        scheduler->to_schedule = next_schedule_decision_to_be_made(ready_tasks, idx);
     }
 
     return selection;

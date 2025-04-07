@@ -70,17 +70,16 @@ int main(void)
 
                 processor->log_attack_data = 0;
                 processor->log_timeslot_data = 1;
-                processor->horizontal = 1;
                 processor->analyze = &analyze_simulation;
 
                 load_tasks(processor, tasks, n, &ff);
 
-                double result[3];
+                double result[8];
                 run(processor, hyper_period, 10000, result);
                 
                 printf("U=%.2f,", actual_U);
                 printf("n=%d,", n);
-                printf("E=%.3f,", result[0]);
+                printf("E=%.3f,", result[6]);
                 printf("\n");
 
                 free_processor(processor);

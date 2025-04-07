@@ -3,13 +3,13 @@
 
 #include "task.h"
 #include "scheduler.h"
+#include "partition_algorithms.h"
 
 typedef struct Core
 {
     int core_id;
 
-    Task **tasks;
-    int num_tasks;
+    TaskGroup *group;
 
     Task *task_to_execute;
     Scheduler *scheduler;
@@ -20,6 +20,6 @@ void free_core(Core *core);
 Task *load_next_task(Core *core);
 void execute_core(Core *core);
 void time_step_core(Core *core);
-void load_tasks_core(Core *core, Task **tasks, int num_tasks);
+void load_tasks_core(Core *core, TaskGroup *group);
 
 #endif // CORE_H
