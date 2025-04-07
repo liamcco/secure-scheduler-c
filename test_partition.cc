@@ -19,7 +19,7 @@ void sim_allocation(int n, int m, Task **tasks, int *allocation, double *result)
 
     processor->log_attack_data = 0;
     processor->log_timeslot_data = 1;
-    processor->migration = 1;
+    processor->migration = 0;
     processor->analyze = &analyze_simulation;
 
     int load_was_successful = load_tasks_from_allocation(processor, tasks, n, allocation); // Attempts to load task according to given allocation
@@ -140,7 +140,7 @@ int sim_partition(Task **tasks, int n, int m, double *result, Partition *(*parti
     Processor *processor = init_processor_custom(m, &init_scheduler_ts);
     processor->log_attack_data = 0;
     processor->log_timeslot_data = 1;
-    processor->migration = 1;
+    processor->migration = 0;
     processor->analyze = &analyze_simulation;
 
     // Load tasks according to the given allocation
@@ -171,7 +171,7 @@ int sim_partition_ff50(Task **tasks, int n, int m, double *result)
     Processor *processor = init_processor_custom(m, &init_scheduler_ts);
     processor->log_attack_data = 0;
     processor->log_timeslot_data = 1;
-    processor->migration = 1;
+    processor->migration = 0;
     processor->analyze = &analyze_simulation;
 
     // Load tasks according to the given allocation
@@ -200,8 +200,7 @@ int sim_partition_ff50(Task **tasks, int n, int m, double *result)
 int main(void)
 {
     // printf("Starting...\n");
-    //srand(time(NULL) ^ clock());
-    srand(10);
+    srand(time(NULL) ^ clock());
     int n = 5; // Number of tasks
     int m = 3; // Number of bins
     long long total_assignments = count_unique_allocations(n, m);
