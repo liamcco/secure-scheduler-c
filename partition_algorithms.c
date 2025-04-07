@@ -462,3 +462,32 @@ Partition *ff_50percent_custom(Task **tasks, int num_tasks, int m, double fracti
     free(remaining_tasks); // Free temp list
     return partitioned_tasks;
 }
+
+Partition *wfminm(Task **tasks, int num_tasks, int m)
+{
+    Partition *partitioned_tasks = init_partition(num_tasks, m);
+
+    for (int low_m = 1; low_m <= m; low_m++)
+    {
+        Partition *attempt = wf(tasks, num_tasks, low_m);
+        if (!check_partition(attempt, num_tasks))
+        {
+            free_partition(attempt);
+            continue;
+        }
+        // Partition is valid, copy it to the partitioned_tasks
+        for (int i = 0; i < low_m; i++)
+        {
+            TaskGroup *group = partitioned_tasks->task_groups[i];
+            TaskGroup *attempt_group = attempt->task_groups[i];
+
+            group->num_tasks = attempt_group->num_tasks;
+            group->utilization = attempt_group->utilization;
+            memcpy(group->tasks, attempt_group->tasks, group->num_tasks * sizeof(Task *));
+        }
+        free_partition(attempt);
+        break;
+    }
+
+    return partitioned_tasks;
+}

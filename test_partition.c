@@ -165,6 +165,37 @@ int sim_partition(Task **tasks, int n, int m, double *result, Partition *(*parti
     return 1;
 }
 
+int sim_partition_ff50(Task **tasks, int n, int m, double *result)
+{
+    // Initialize processor and load tasks
+    Processor *processor = init_processor_custom(m, &init_scheduler_ts);
+    processor->log_attack_data = 0;
+    processor->log_timeslot_data = 1;
+    processor->migration = 1;
+    processor->analyze = &analyze_simulation;
+
+    // Load tasks according to the given allocation
+    prioritize(tasks, n, compare);
+    int load_was_successful = load_tasks_with_algorithm_argument(processor, tasks, n, &ff_50percent_custom, 0.5);
+    if (!load_was_successful)
+    {
+        free_processor(processor);
+        return 0;
+    }
+
+    for (int i = 0; i < n; i++)
+    {
+        reset(tasks[i]);
+    }
+    // Run simulation
+    run(processor, 3000, 1000, result);
+    //printf("Result: %.3f\n", result[6]);
+    // Reset tasks
+
+    free_processor(processor);
+    return 1;
+}
+
 // Example usage
 int main(void)
 {
@@ -289,6 +320,17 @@ int main(void)
         printf("FF-DU_h=%.3f,", result[6] / max_h);
         printf("FF-DU_v=%.3f,", result[7] / max_v);
     }
+    success = sim_partition(tasks, n, m, result, &wfminm, &DU);
+    if (success) {
+        printf("WF-minm_h=%.3f,", result[6] / max_h);
+        printf("WF-minm_v=%.3f,", result[7] / max_v);
+    }
+    success = sim_partition_ff50(tasks, n, m, result);
+    if (success) {
+        printf("FF-50_h=%.3f,", result[6] / max_h);
+        printf("FF-50_v=%.3f,", result[7] / max_v);
+    }
+    
 
     free_tasks(tasks, n);
     printf("\n");
