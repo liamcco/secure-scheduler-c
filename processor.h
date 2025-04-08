@@ -14,6 +14,7 @@ typedef struct Processor
 {
     Partition *tasks;
     int migration;
+    int reprioritize;
 
     TaskGroup *all_tasks;
 

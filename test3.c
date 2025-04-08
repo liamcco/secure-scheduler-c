@@ -17,35 +17,27 @@ Scheduler *init_scheduler_nosort(void)
     return scheduler;
 }
 
-int sim_partition(Task **tasks, int n, int m, double *result, int(*compare)(const void *, const void *))
+int sim_partition(Task **tasks, int n, int m, double *result, int reprioritize)
 {
     // Initialize processor and load tasks
     Processor *processor = init_processor_custom(m, init_scheduler_fp);
     processor->log_attack_data = 1;
     processor->log_timeslot_data = 0;
-    processor->migration = 0;
+    processor->reprioritize = reprioritize;
     processor->analyze = &analyze_simulation;
 
     // Load tasks according to the given allocation
-    prioritize(tasks, n, &DU);
+    prioritize(tasks, n, &RM);
     int load_was_successful = load_tasks(processor, tasks, n, &wf);
     if (!load_was_successful)
     {
         free_processor(processor);
         return 0;
     }
-    
 
     for (int i = 0; i < n; i++)
     {
         reset(tasks[i]);
-    }
-
-    for (int i = 0; i < m; i++) {
-        TaskGroup *group = processor->tasks->task_groups[i];
-        int num_tasks = group->num_tasks;
-        OPA_with_priority(group->tasks, num_tasks, compare);
-        load_tasks_core(processor->cores[i], group);
     }
 
     // Run simulation
@@ -119,23 +111,18 @@ int main(void)
     printf("U=%.2f,", actual_U);
     printf("f=%.2f,", (double)num_untrusted_tasks / (double)n);
 
-    int success = sim_partition(tasks, n, m, result, &RRM);
+    int success = sim_partition(tasks, n, m, result, 0);
     if (success) {
-        printf("RM_an=%.3f,", result[0]);
-        printf("RM_po=%.3f,", result[1]);
-        printf("RM_pi=%.3f,", result[2]);
+        printf("NP_an=%.3f,", result[0]);
+        printf("NP_po=%.3f,", result[1]);
+        printf("NP_pi=%.3f,", result[2]);
     }
-    success = sim_partition(tasks, n, m, result, &IU);
+
+    success = sim_partition(tasks, n, m, result, 1);
     if (success) {
-        printf("IU_an=%.3f,", result[0]);
-        printf("IU_po=%.3f,", result[1]);
-        printf("IU_pi=%.3f,", result[2]);
-    }
-    success = sim_partition(tasks, n, m, result, &DU);
-    if (success) {
-        printf("DU_an=%.3f,", result[1]);
-        printf("DU_po=%.3f,", result[2]);
-        printf("DU_pi=%.3f,", result[3]);
+        printf("RP_an=%.3f,", result[0]);
+        printf("RP_po=%.3f,", result[1]);
+        printf("RP_pi=%.3f,", result[2]);
     }
 
     free_tasks(tasks, n);

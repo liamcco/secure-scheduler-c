@@ -7,6 +7,7 @@
 #include "priority.h"
 #include "simulation.h"
 #include "migration.h"
+#include "reprioritze.h"
 
 Processor *init_processor(int m)
 {
@@ -30,6 +31,7 @@ Processor *init_processor_custom(int m, Scheduler *(*init_scheduler)(void))
     processor->all_tasks = NULL;
 
     processor->migration = 0;
+    processor->reprioritize = 0;
 
     processor->log_schedule = 0;
     processor->log_attack_data = 0;
@@ -191,8 +193,12 @@ int run(Processor *processor, int hyperperiod, int num_hyperperiods, double *res
         log_execution(processor, t);
         time_step_processor(processor);
 
-        if (t % hyperperiod == hyperperiod - 1 && processor->migration) {
-            random_migration(processor);
+        if (t % hyperperiod == hyperperiod - 1) {
+            if (processor->migration)
+                random_migration(processor);
+            
+            if (processor->reprioritize)
+                reprioritze(processor);
         }
     }
 
