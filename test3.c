@@ -17,13 +17,14 @@ Scheduler *init_scheduler_nosort(void)
     return scheduler;
 }
 
-int sim_partition(Task **tasks, int n, int m, double *result, int reprioritize)
+int sim_partition(Task **tasks, int n, int m, double *result, int reprioritize, int migration)
 {
     // Initialize processor and load tasks
     Processor *processor = init_processor_custom(m, init_scheduler_fp);
     processor->log_attack_data = 1;
     processor->log_timeslot_data = 0;
     processor->reprioritize = reprioritize;
+    processor->migration = migration;
     processor->analyze = &analyze_simulation;
 
     // Load tasks according to the given allocation
@@ -111,18 +112,32 @@ int main(void)
     printf("U=%.2f,", actual_U);
     printf("f=%.2f,", (double)num_untrusted_tasks / (double)n);
 
-    int success = sim_partition(tasks, n, m, result, 0);
+    int success = sim_partition(tasks, n, m, result, 0, 0);
     if (success) {
         printf("NP_an=%.3f,", result[0]);
         printf("NP_po=%.3f,", result[1]);
         printf("NP_pi=%.3f,", result[2]);
     }
 
-    success = sim_partition(tasks, n, m, result, 1);
+    success = sim_partition(tasks, n, m, result, 1, 0);
     if (success) {
         printf("RP_an=%.3f,", result[0]);
         printf("RP_po=%.3f,", result[1]);
         printf("RP_pi=%.3f,", result[2]);
+    }
+
+    success = sim_partition(tasks, n, m, result, 0, 1);
+    if (success) {
+        printf("NPM_an=%.3f,", result[0]);
+        printf("NPM_po=%.3f,", result[1]);
+        printf("NPM_pi=%.3f,", result[2]);
+    }
+
+    success = sim_partition(tasks, n, m, result, 1, 1);
+    if (success) {
+        printf("RPM_an=%.3f,", result[0]);
+        printf("RPM_po=%.3f,", result[1]);
+        printf("RPM_pi=%.3f,", result[2]);
     }
 
     free_tasks(tasks, n);
