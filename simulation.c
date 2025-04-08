@@ -150,9 +150,9 @@ void log_execution(Processor *processor, int time)
                 }
                 if (will_execute)
                     continue;
-                if (is_fresh(tasks[j]))
+                if (is_fresh(tasks[j]) && tasks[j]->c_idx == task->c_idx)
                     attack_data[j].current_anteriors[executed_idx] = 1;
-                if (is_complete(tasks[j]))
+                if (is_complete(tasks[j]) && tasks[j]->c_idx == task->c_idx)
                     attack_data[j].current_posteriors[executed_idx] = 1;
             }
         }

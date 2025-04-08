@@ -93,7 +93,7 @@ void calculate_schedule_entropy_vertical(Processor *processor, double *result)
     *result = total_entropy;
 }
 
-void calculate_attack_data(Processor *processor, double *result, int horizontal) {
+void calculate_attack_data(Processor *processor, double *result) {
     SimulationData *sim_data = processor->simulation;
 
     AttackData *attack_data = sim_data->attack_data;
@@ -129,9 +129,6 @@ void calculate_attack_data(Processor *processor, double *result, int horizontal)
             //     continue;
 
             if (tasks[j]->trusted)
-                continue;
-
-            if (horizontal && tasks[j]->c_id != tasks[i]->c_id)
                 continue;
 
             if (data->anterior[j]) {
@@ -207,11 +204,11 @@ void analyze_simulation(Processor *processor, double *result)
     if (log_attack_data)
     {
         double attack_data[3];
-        calculate_attack_data(processor, attack_data, 1);
+        calculate_attack_data(processor, attack_data);
         result[0] = attack_data[0];
         result[1] = attack_data[1];
         result[2] = attack_data[2];
-        calculate_attack_data(processor, attack_data, 0);
+        calculate_attack_data(processor, attack_data);
         result[3] = attack_data[0];
         result[4] = attack_data[1];
         result[5] = attack_data[2];
