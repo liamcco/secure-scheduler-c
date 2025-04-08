@@ -197,8 +197,9 @@ int run(Processor *processor, int hyperperiod, int num_hyperperiods, double *res
             if (processor->migration)
                 random_migration(processor);
             
-            if (processor->reprioritize)
+            if (processor->reprioritize) {
                 reprioritze(processor);
+            }
         }
     }
 
