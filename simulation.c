@@ -46,8 +46,12 @@ void setup_simulation(Processor *processor, int hyperperiod, int num_hyperperiod
         attack_data->num_instances = 0;
     }
 
+    data->timeslots = malloc(processor->m * sizeof(int *));
     // Allocate timeslot data
-    data->timeslots = calloc(data->hyperperiod * (num_tasks + processor->m), sizeof(int));
+    for (int i = 0; i < processor->m; i++)
+    {
+        data->timeslots[i] = calloc(data->hyperperiod * (num_tasks + processor->m), sizeof(int));
+    }
 
     processor->simulation = data;
 }
@@ -79,7 +83,10 @@ void teardown_simulation(Processor *processor)
     }
     free(data->attack_data_h);
 
-
+    for (int i = 0; i < processor->m; i++)
+    {
+        free(data->timeslots[i]);
+    }
     free(data->timeslots);
 
     free(data->schedule);
@@ -154,7 +161,7 @@ void log_execution(Processor *processor, int time)
         if (log_timeslot_data)
         {
             int idx = task->id + processor->m;
-            sim_data->timeslots[(time % sim_data->hyperperiod) * (sim_data->num_tasks + processor->m)+ idx]++;
+            sim_data->timeslots[i][(time % sim_data->hyperperiod) * (sim_data->num_tasks + processor->m)+ idx]++;
         }
 
         // Attack Data

@@ -22,7 +22,7 @@ typedef struct SimulationData
     int *schedule;
     AttackData *attack_data; // Single array instead of double pointer
     AttackData *attack_data_h;
-    int *timeslots;
+    int **timeslots;
     int hyperperiod;
     int num_cores;
     int num_tasks;

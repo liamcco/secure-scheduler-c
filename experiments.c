@@ -7,13 +7,13 @@ void calculate_schedule_entropy_horizontal(Processor *processor, double *result)
 {
     SimulationData *sim_data = processor->simulation;
     double entropies[processor->m];
-    int *t_data = sim_data->timeslots;
     int hyperperiod = sim_data->hyperperiod;
     int num_periods = sim_data->time / hyperperiod;
     int num_all_tasks = sim_data->num_tasks + processor->m;
         
     for (int i = 0; i < processor->m; i++)
     {
+        int *t_data = sim_data->timeslots[i];
         double total_entropy = 0;
         entropies[i] = 0;
 
@@ -71,7 +71,7 @@ void calculate_schedule_entropy_vertical(Processor *processor, double *result)
 {
     SimulationData *sim_data = processor->simulation;
     double total_entropy = 0;
-    int *t_data = sim_data->timeslots;
+    int **t_data = sim_data->timeslots;
     int hyperperiod = sim_data->hyperperiod;
     int num_periods = sim_data->time / hyperperiod;
     int num_tasks = sim_data->num_tasks + processor->m;
@@ -81,7 +81,12 @@ void calculate_schedule_entropy_vertical(Processor *processor, double *result)
         double entropy = 0;
         for (int j = 0; j < num_tasks; j++)
         {
-            double p = (double)t_data[i * num_tasks + j] / (num_periods);
+            int task_instances = 0;
+            for (int k = 0; k < processor->m; k++)
+            {
+                task_instances += t_data[k][i * num_tasks + j];
+            }
+            double p = (double)task_instances / (num_periods);
             if (p > 0)
                 entropy -= p * log2(p);
         }

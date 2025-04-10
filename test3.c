@@ -130,30 +130,7 @@ int main(void)
         printf("X_po=%.3f,", result[1]);
         printf("X_pi=%.3f,", result[2]);
         printf("X_h=%.3f,", result[6]);
-    }
-
-    success = sim_partition(tasks, n, m, result, 1, 0, 0);
-    if (success) {
-        printf("XR_an=%.3f,", result[0]);
-        printf("XR_po=%.3f,", result[1]);
-        printf("XR_pi=%.3f,", result[2]);
-        printf("XR_h=%.3f,", result[6]);
-    }
-
-    success = sim_partition(tasks, n, m, result, 0, 1, 0);
-    if (success) {
-        printf("XM_an=%.3f,", result[0]);
-        printf("XM_po=%.3f,", result[1]);
-        printf("XM_pi=%.3f,", result[2]);
-        printf("XM_h=%.3f,", result[6]);
-    }
-
-    success = sim_partition(tasks, n, m, result, 0, 0, 1);
-    if (success) {
-        printf("XP_an=%.3f,", result[0]);
-        printf("XP_po=%.3f,", result[1]);
-        printf("XP_pi=%.3f,", result[2]);
-        printf("XP_h=%.3f,", result[6]);
+        printf("X_v=%.3f,", result[7]);
     }
 
     success = sim_partition(tasks, n, m, result, 1, 1, 1);
@@ -162,6 +139,7 @@ int main(void)
         printf("XRMP_po=%.3f,", result[1]);
         printf("XRMP_pi=%.3f,", result[2]);
         printf("XRMP_h=%.3f,", result[6]);
+        printf("XRMP_v=%.3f,", result[7]);
     }
 
 
