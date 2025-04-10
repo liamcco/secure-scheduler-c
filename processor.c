@@ -203,8 +203,10 @@ int run(Processor *processor, int hyperperiod, int num_hyperperiods, double *res
         }
     }
 
-    if (processor->log_attack_data)
-        check_new_tasks_for_attacks(processor);
+    if (processor->log_attack_data) {
+        check_new_tasks_for_attacks(processor->all_tasks, processor->simulation->attack_data);
+        check_new_tasks_for_attacks(processor->all_tasks, processor->simulation->attack_data_h);
+    }
 
     if (processor->analyze)
         processor->analyze(processor, result);

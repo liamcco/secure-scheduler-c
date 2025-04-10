@@ -16,6 +16,7 @@ Scheduler *init_scheduler_ts(void)
     scheduler->idle_task = init_idle_task();
     scheduler->to_schedule = 0;
     scheduler->previous_task = NULL;
+    scheduler->push_back = 0;
 
     scheduler->schedule_task = &schedule_task_ts;
     scheduler->task_completed = &task_completed_ts;
@@ -64,6 +65,24 @@ Task *schedule_task_ts(Scheduler *scheduler)
     return scheduler->previous_task;
 }
 
+int pick_nonpushable_task(Task **ready_tasks, int tasks_to_consider)
+{
+    int non_pushable_indices[tasks_to_consider];
+    int count = 0;
+
+    for (int i = 0; i < tasks_to_consider; i++) {
+        if (!(ready_tasks[i]->remaining_execution_time == 1 &&
+              ready_tasks[i]->remaining_inversion_budget < 0)) {
+            non_pushable_indices[count++] = i;
+        }
+    }
+
+    if (count == 0) return tasks_to_consider;  // Optional: handle case when no valid tasks
+
+    int rand_idx = rand() % count;
+    return non_pushable_indices[rand_idx];
+}
+
 // Implemets TaskShuffler
 Task *pick_task(Scheduler *scheduler)
 {
@@ -93,6 +112,10 @@ Task *pick_task(Scheduler *scheduler)
     if (selection->remaining_inversion_budget <= 0)
     {
         scheduler->to_schedule = selection->remaining_execution_time;
+        if (scheduler->push_back && selection->remaining_execution_time > 0)
+        {
+            scheduler->to_schedule--;
+        }
         return selection;
     }
 
@@ -121,6 +144,9 @@ Task *pick_task(Scheduler *scheduler)
 
     // Step 2: Random selection
     int idx = rand() % (tasks_to_consider + consider_idle_task);
+    if (scheduler->push_back)
+        idx = pick_nonpushable_task(ready_tasks, tasks_to_consider);
+
     if (idx < tasks_to_consider)
     {
         selection = ready_tasks[idx];
@@ -142,6 +168,11 @@ Task *pick_task(Scheduler *scheduler)
     else
     {
         scheduler->to_schedule = next_schedule_decision_to_be_made(ready_tasks, idx);
+    }
+
+    if (scheduler->push_back && selection->remaining_execution_time == scheduler->to_schedule && scheduler->to_schedule > 1)
+    {
+        scheduler->to_schedule--;
     }
 
     return selection;

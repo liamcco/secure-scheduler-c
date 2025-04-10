@@ -17,6 +17,8 @@ typedef struct Scheduler
     int to_schedule;
     Task *previous_task;
 
+    int push_back;
+
     Task *(*schedule_task)(struct Scheduler *scheduler);
     void (*task_completed)(struct Scheduler *scheduler, Task *task);
     void (*task_arrived)(struct Scheduler *scheduler, Task *task);

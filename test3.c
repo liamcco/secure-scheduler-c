@@ -11,18 +11,30 @@
 #include "priority.h"
 #include "opa.h"
 
-Scheduler *init_scheduler_nosort(void)
+Scheduler *init_scheduler_ts_with_push_back(void)
 {
-    Scheduler *scheduler = init_scheduler_ts_custom(NULL);
+    Scheduler *scheduler = init_scheduler_ts();
+    scheduler->push_back = 1;
     return scheduler;
 }
 
-int sim_partition(Task **tasks, int n, int m, double *result, int reprioritize, int migration)
+int sim_partition(Task **tasks, int n, int m, double *result, int reprioritize, int migration, int push_back)
 {
+    Scheduler *(*init_scheduler)(void);
+
+    if (push_back)
+    {
+        init_scheduler = &init_scheduler_ts_with_push_back;
+    }
+    else
+    {
+        init_scheduler = &init_scheduler_ts;
+    }
+
     // Initialize processor and load tasks
-    Processor *processor = init_processor_custom(m, init_scheduler_fp);
+    Processor *processor = init_processor_custom(m, init_scheduler);
     processor->log_attack_data = 1;
-    processor->log_timeslot_data = 0;
+    processor->log_timeslot_data = 1;
     processor->reprioritize = reprioritize;
     processor->migration = migration;
     processor->analyze = &analyze_simulation;
@@ -58,7 +70,7 @@ int main(void)
     int n = 25; // Number of tasks
     int m = 4; // Number of bins
 
-    for (int f = 5; f <= 100; f+=20) {
+    for (int f = 4; f <= 20; f+=4) {
     double fraction_untrusted = (double)f / 100.0;
     for (int u = 2; u < 81; u++)
     {
@@ -112,33 +124,46 @@ int main(void)
     printf("U=%.2f,", actual_U);
     printf("f=%.2f,", (double)num_untrusted_tasks / (double)n);
 
-    int success = sim_partition(tasks, n, m, result, 0, 0);
+    int success = sim_partition(tasks, n, m, result, 0, 0, 0);
     if (success) {
-        printf("NP_an=%.3f,", result[0]);
-        printf("NP_po=%.3f,", result[1]);
-        printf("NP_pi=%.3f,", result[2]);
+        printf("X_an=%.3f,", result[0]);
+        printf("X_po=%.3f,", result[1]);
+        printf("X_pi=%.3f,", result[2]);
+        printf("X_h=%.3f,", result[6]);
     }
 
-    success = sim_partition(tasks, n, m, result, 1, 0);
+    success = sim_partition(tasks, n, m, result, 1, 0, 0);
     if (success) {
-        printf("RP_an=%.3f,", result[0]);
-        printf("RP_po=%.3f,", result[1]);
-        printf("RP_pi=%.3f,", result[2]);
+        printf("XR_an=%.3f,", result[0]);
+        printf("XR_po=%.3f,", result[1]);
+        printf("XR_pi=%.3f,", result[2]);
+        printf("XR_h=%.3f,", result[6]);
     }
 
-    success = sim_partition(tasks, n, m, result, 0, 1);
+    success = sim_partition(tasks, n, m, result, 0, 1, 0);
     if (success) {
-        printf("NPM_an=%.3f,", result[0]);
-        printf("NPM_po=%.3f,", result[1]);
-        printf("NPM_pi=%.3f,", result[2]);
+        printf("XM_an=%.3f,", result[0]);
+        printf("XM_po=%.3f,", result[1]);
+        printf("XM_pi=%.3f,", result[2]);
+        printf("XM_h=%.3f,", result[6]);
     }
 
-    success = sim_partition(tasks, n, m, result, 1, 1);
+    success = sim_partition(tasks, n, m, result, 0, 0, 1);
     if (success) {
-        printf("RPM_an=%.3f,", result[0]);
-        printf("RPM_po=%.3f,", result[1]);
-        printf("RPM_pi=%.3f,", result[2]);
+        printf("XP_an=%.3f,", result[0]);
+        printf("XP_po=%.3f,", result[1]);
+        printf("XP_pi=%.3f,", result[2]);
+        printf("XP_h=%.3f,", result[6]);
     }
+
+    success = sim_partition(tasks, n, m, result, 1, 1, 1);
+    if (success) {
+        printf("XRMP_an=%.3f,", result[0]);
+        printf("XRMP_po=%.3f,", result[1]);
+        printf("XRMP_pi=%.3f,", result[2]);
+        printf("XRMP_h=%.3f,", result[6]);
+    }
+
 
     free_tasks(tasks, n);
     printf("\n");

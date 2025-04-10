@@ -21,6 +21,7 @@ typedef struct SimulationData
 {
     int *schedule;
     AttackData *attack_data; // Single array instead of double pointer
+    AttackData *attack_data_h;
     int *timeslots;
     int hyperperiod;
     int num_cores;
@@ -30,7 +31,7 @@ typedef struct SimulationData
 
 void setup_simulation(Processor *processor, int hp, int n_hp);
 void log_execution(Processor *processor, int time);
-void check_new_tasks_for_attacks(Processor *processor);
+void check_new_tasks_for_attacks(TaskGroup *all_tasks, AttackData *attack_data);
 int calculate_hyperperiod(struct Task **tasks, int num_tasks);
 void teardown_simulation(Processor *processor);
 

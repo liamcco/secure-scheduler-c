@@ -33,6 +33,19 @@ void setup_simulation(Processor *processor, int hyperperiod, int num_hyperperiod
         attack_data->num_instances = 0;
     }
 
+    // Allocate attack data as a contiguous block
+    data->attack_data_h = malloc(num_tasks * sizeof(AttackData));
+    for (int i = 0; i < num_tasks; i++)
+    {
+        AttackData *attack_data = &data->attack_data_h[i];
+        attack_data->anterior = calloc(num_tasks, sizeof(int));
+        attack_data->posterior = calloc(num_tasks, sizeof(int));
+        attack_data->pincher = calloc(num_tasks, sizeof(int));
+        attack_data->current_anteriors = calloc(num_tasks, sizeof(int));
+        attack_data->current_posteriors = calloc(num_tasks, sizeof(int));
+        attack_data->num_instances = 0;
+    }
+
     // Allocate timeslot data
     data->timeslots = calloc(data->hyperperiod * (num_tasks + processor->m), sizeof(int));
 
@@ -55,17 +68,28 @@ void teardown_simulation(Processor *processor)
     }
     free(data->attack_data);
 
+    for (int i = 0; i < num_tasks; i++)
+    {
+        AttackData *attack_data = &data->attack_data_h[i];
+        free(attack_data->anterior);
+        free(attack_data->posterior);
+        free(attack_data->pincher);
+        free(attack_data->current_anteriors);
+        free(attack_data->current_posteriors);
+    }
+    free(data->attack_data_h);
+
+
     free(data->timeslots);
 
     free(data->schedule);
     free(data);
 }
 
-void check_new_tasks_for_attacks(Processor *processor)
+void check_new_tasks_for_attacks(TaskGroup *all_tasks, AttackData* attack_data)
 {
-    int num_tasks = processor->all_tasks->num_tasks;
-    AttackData *attack_data = processor->simulation->attack_data;
-    Task **tasks = processor->all_tasks->tasks;
+    int num_tasks = all_tasks->num_tasks;
+    Task **tasks = all_tasks->tasks;
 
     // Enter Attack Data
     for (int i = 0; i < num_tasks; i++)
@@ -104,10 +128,13 @@ void log_execution(Processor *processor, int time)
 
     // Enter Attack Data
 
-    if (log_attack_data)
-        check_new_tasks_for_attacks(processor);
-
+    if (log_attack_data) {
+        check_new_tasks_for_attacks(processor->all_tasks, sim_data->attack_data);
+        check_new_tasks_for_attacks(processor->all_tasks, sim_data->attack_data_h);
+    }
+        
     AttackData *attack_data = sim_data->attack_data;
+    AttackData *attack_data_h = sim_data->attack_data_h;
     Task **tasks = processor->all_tasks->tasks;
     int num_tasks = processor->all_tasks->num_tasks;
 
@@ -150,10 +177,19 @@ void log_execution(Processor *processor, int time)
                 }
                 if (will_execute)
                     continue;
-                if (is_fresh(tasks[j]) && tasks[j]->c_idx == task->c_idx)
+
+                int same_core = tasks[j]->c_idx == task->c_idx;
+                // Only considers attacks on same core...
+                if (is_fresh(tasks[j]) && same_core) {
                     attack_data[j].current_anteriors[executed_idx] = 1;
-                if (is_complete(tasks[j]) && tasks[j]->c_idx == task->c_idx)
+                    if (same_core)
+                        attack_data_h[j].current_anteriors[executed_idx] = 1;
+                }
+                if (is_complete(tasks[j]) && same_core) {
                     attack_data[j].current_posteriors[executed_idx] = 1;
+                    if (same_core)
+                        attack_data_h[j].current_posteriors[executed_idx] = 1;
+                }
             }
         }
     }
