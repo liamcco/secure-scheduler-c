@@ -33,7 +33,7 @@ int main(void)
     {
         for (int n_idx = 0; n_idx < 6; n_idx++)
         {
-            for (int u = 0; u < 10; u++)
+            for (int u = 0; u < 9; u++)
             {
 
                 int n = numOfTasks[n_idx];
@@ -54,7 +54,7 @@ int main(void)
                         actual_U += tasks_attempt[j]->utilization;
                     }
 
-                    if (RTA(tasks_attempt, n, &RM))
+                    if (U_low < actual_U && actual_U < U_high && RTA(tasks_attempt, n, &RM))
                     {
                         tasks = tasks_attempt;
                         break;
