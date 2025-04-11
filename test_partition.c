@@ -324,10 +324,10 @@ int main(void)
         printf("WF-minm_h=%.3f,", result[6] / max_h);
         printf("WF-minm_v=%.3f,", result[7] / max_v);
     }
-    success = sim_partition_ff50(tasks, n, m, result);
+    success = sim_partition(tasks, n, m, result, &wfminm2, &DU);
     if (success) {
-        printf("FF-50_h=%.3f,", result[6] / max_h);
-        printf("FF-50_v=%.3f,", result[7] / max_v);
+        printf("WF-minm2_h=%.3f,", result[6] / max_h);
+        printf("WF-minm2_v=%.3f,", result[7] / max_v);
     }
     
 

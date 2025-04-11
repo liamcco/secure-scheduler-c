@@ -491,3 +491,51 @@ Partition *wfminm(Task **tasks, int num_tasks, int m)
 
     return partitioned_tasks;
 }
+
+Partition *wfminm2(Task **tasks, int num_tasks, int m)
+{
+    Partition *partitioned_tasks = init_partition(num_tasks, m);
+    double utilization_limit = 0.6; // Set the utilization limit
+
+    for (int low_m = 1; low_m <= m; low_m++)
+    {
+        Partition *attempt = wf(tasks, num_tasks, low_m);
+        if (!check_partition(attempt, num_tasks))
+        {
+            free_partition(attempt);
+            continue;
+        }
+
+        // Can we do better?
+        double top_utilization = 0;
+        for (int i = 0; i < low_m; i++)
+        {
+            TaskGroup *group = attempt->task_groups[i];
+            if (group->utilization > top_utilization)
+            {
+                top_utilization = group->utilization;
+            }
+        }
+
+        if (top_utilization > utilization_limit && low_m < m)
+        {
+            free_partition(attempt);
+            continue;
+        }
+
+        // Partition is valid, copy it to the partitioned_tasks
+        for (int i = 0; i < low_m; i++)
+        {
+            TaskGroup *group = partitioned_tasks->task_groups[i];
+            TaskGroup *attempt_group = attempt->task_groups[i];
+
+            group->num_tasks = attempt_group->num_tasks;
+            group->utilization = attempt_group->utilization;
+            memcpy(group->tasks, attempt_group->tasks, group->num_tasks * sizeof(Task *));
+        }
+        free_partition(attempt);
+        break;
+    }
+
+    return partitioned_tasks;
+}

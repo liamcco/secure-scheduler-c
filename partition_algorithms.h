@@ -29,6 +29,7 @@ Partition *nf(Task **tasks, int num_tasks, int m);
 Partition *bf(Task **tasks, int num_tasks, int m);
 Partition *wf(Task **tasks, int num_tasks, int m);
 Partition *wfminm(Task **tasks, int num_tasks, int m);
+Partition *wfminm2(Task **tasks, int num_tasks, int m);
 Partition *rndf(Task **tasks, int num_tasks, int m);
 Partition *even(Task **tasks, int num_tasks, int m);
 Partition *even2(Task **tasks, int num_tasks, int m, int limit);
