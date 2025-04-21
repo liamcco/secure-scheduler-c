@@ -65,19 +65,18 @@ Task *schedule_task_ts(Scheduler *scheduler)
     return scheduler->previous_task;
 }
 
-int pick_nonpushable_task(Task **ready_tasks, int tasks_to_consider)
+int pick_nonpushable_task(Task **ready_tasks, int tasks_to_consider, int consider_idle_task)
 {
     int non_pushable_indices[tasks_to_consider];
     int count = 0;
 
     for (int i = 0; i < tasks_to_consider; i++) {
-        if (!(ready_tasks[i]->remaining_execution_time == 1 &&
-              ready_tasks[i]->remaining_inversion_budget < 0)) {
+        if (!(ready_tasks[i]->remaining_execution_time == 1)) {
             non_pushable_indices[count++] = i;
         }
     }
 
-    if (count == 0) return tasks_to_consider;  // Optional: handle case when no valid tasks
+    if (count == 0) return tasks_to_consider - 1 + consider_idle_task;  // Optional: handle case when no valid tasks
 
     int rand_idx = rand() % count;
     return non_pushable_indices[rand_idx];
@@ -145,7 +144,7 @@ Task *pick_task(Scheduler *scheduler)
     // Step 2: Random selection
     int idx = rand() % (tasks_to_consider + consider_idle_task);
     if (scheduler->push_back)
-        idx = pick_nonpushable_task(ready_tasks, tasks_to_consider);
+        idx = pick_nonpushable_task(ready_tasks, tasks_to_consider, consider_idle_task);
 
     if (idx < tasks_to_consider)
     {
@@ -206,7 +205,6 @@ void time_step_scheduler_ts(Scheduler *scheduler)
     // Decrement task budget after we now wich task is going to be executed
     decrement_task_budgets(scheduler);
     scheduler->to_schedule--;
-
 }
 
 int next_schedule_decision_to_be_made(Task **ready_tasks, int idx)
@@ -226,7 +224,7 @@ int next_schedule_decision_to_be_made_idle(Task **ready_tasks, int num_ready_tas
     {
         max_execution_time = MIN(max_execution_time, ready_tasks[i]->remaining_inversion_budget);
     }
-    return rand() % (max_execution_time - 1 + 1) + 1;
+    return rand() % (max_execution_time) + 1;
 }
 
 int minimum_inversion_priority(int c_idx, Task **tasks, int num_tasks)

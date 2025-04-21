@@ -20,6 +20,7 @@ Task **generate_task_set(int n, double U, int hyper_period, int lowest_duration,
 
     // Get valid periods (must be a divisor of period_limit)
     struct Divisors *divisors = find_divisors(hyper_period);
+    filter_divisors_min(divisors, 10);
 
     Task **task_set = malloc(n * sizeof(Task *));
 
@@ -82,6 +83,33 @@ struct Divisors *find_divisors(int n)
     divisors_container->num_divisors = num_divisors;
 
     return divisors_container;
+}
+
+int compare_ints(const void *a, const void *b)
+{
+    int diff = *(int *)a - *(int *)b;
+    return (diff > 0) - (diff < 0);
+}
+
+void filter_divisors_min(struct Divisors *divisors, int n) {
+    // Step 1. Sort divisors
+    qsort(divisors->divisors, divisors->num_divisors, sizeof(int), compare_ints);
+
+    // Step 2. Find how many divisors are less than n
+    int count = 0;
+    for (int i = 0; i < divisors->num_divisors; i++) {
+        if (divisors->divisors[i] < n) {
+            count++;
+        }
+    }
+
+    // Step 3. Move the valid divisors to the front
+    for (int i = count; i < divisors->num_divisors; i++) {
+        divisors->divisors[i - count] = divisors->divisors[i];
+    }
+
+    // Step 4. Update the number of divisors
+    divisors->num_divisors -= count;
 }
 
 // Function to compare two doubles for qsort (for permutations later)

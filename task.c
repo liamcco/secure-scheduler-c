@@ -10,6 +10,9 @@ Task *init_task(int period, int duration)
     task->max_jitter = period * 0.1;
     task->remaining_jitter = 0;
 
+    task->remaining_inversion_budget = 0;
+    task->maximum_inversion_budget = 0;
+
     task->period = period;
     task->duration = duration;
     task->deadline = period;
@@ -98,6 +101,8 @@ void reset_task(Task *task)
     task->remaining_deadline = task->deadline;
     task->time_until_next_period = task->period;
     task->remaining_execution_time = task->duration;
+
+    //task->remaining_inversion_budget = task->maximum_inversion_budget;
 
     if (task->max_jitter == 0)
     {
