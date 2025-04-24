@@ -139,9 +139,9 @@ int RTA_test_with_migration(TaskGroup *group, Task *task, int (*compare)(const v
     return RTA_test_with_custom(group, task, compare, 1);
 }
 
-int RTA_test_with(TaskGroup *group, int (*compare)(const void *, const void *))
+int RTA_test_with(TaskGroup *group, Task *task, int (*compare)(const void *, const void *))
 {
-    return RTA_test_with_custom(group, NULL, compare, 0);
+    return RTA_test_with_custom(group, task, compare, 0);
 }
 
 int LL_test_with(TaskGroup *group, Task *task)
