@@ -19,6 +19,10 @@ typedef struct Scheduler
 
     int push_back;
 
+    int risat_budget;
+
+    int adjust_budget;
+
     Task *(*schedule_task)(struct Scheduler *scheduler);
     void (*task_completed)(struct Scheduler *scheduler, Task *task);
     void (*task_arrived)(struct Scheduler *scheduler, Task *task);
@@ -58,5 +62,7 @@ void load_tasks_scheduler_ts(Scheduler *scheduler, Task **tasks, int num_tasks);
 void decrement_task_budgets(Scheduler *scheduler);
 int worst_case_maximum_inversion_budget(Task *task, Task **tasks);
 int upper_bound_interference_from_hp(Task *task_i, Task **tasks);
+int worst_case_maximum_inversion_budget_risat(Task *task, Task **tasks);
+int upper_bound_interference_from_hp_risat(Task *task_i, Task **tasks);
 
 #endif // SCHEDULER_H

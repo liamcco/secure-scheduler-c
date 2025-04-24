@@ -17,6 +17,8 @@ Scheduler *init_scheduler_ts(void)
     scheduler->to_schedule = 0;
     scheduler->previous_task = NULL;
     scheduler->push_back = 0;
+    scheduler->risat_budget = 0;
+    scheduler->adjust_budget = 0;
 
     scheduler->schedule_task = &schedule_task_ts;
     scheduler->task_completed = &task_completed_ts;
@@ -49,7 +51,10 @@ void load_tasks_scheduler_ts(Scheduler *scheduler, Task **tasks, int num_tasks)
         Task *task = tasks[i];
 
         task->c_idx = i;
-        task->maximum_inversion_budget = worst_case_maximum_inversion_budget(task, tasks);
+        if (scheduler->risat_budget)
+            task->maximum_inversion_budget = worst_case_maximum_inversion_budget_risat(task, tasks);
+        else
+            task->maximum_inversion_budget = worst_case_maximum_inversion_budget(task, tasks);
         task->remaining_inversion_budget = task->maximum_inversion_budget;
     }
 }
@@ -198,6 +203,14 @@ void task_arrived_ts(Scheduler *scheduler, Task *task)
 {
     scheduler->to_schedule = 0;
     task->remaining_inversion_budget = task->maximum_inversion_budget;
+
+    if (scheduler->adjust_budget) {
+        task->remaining_inversion_budget += task->max_jitter - (task->period - task->time_until_next_period);
+    }
+        
+
+    
+    
 }
 
 void time_step_scheduler_ts(Scheduler *scheduler)
@@ -245,6 +258,11 @@ int worst_case_maximum_inversion_budget(Task *task_i, Task **tasks)
     return task_i->deadline - (task_i->duration + task_i->max_jitter + upper_bound_interference_from_hp(task_i, tasks));
 }
 
+int worst_case_maximum_inversion_budget_risat(Task *task_i, Task **tasks)
+{
+    return task_i->deadline - (task_i->duration + task_i->max_jitter + upper_bound_interference_from_hp_risat(task_i, tasks));
+}
+
 int upper_bound_interference_from_hp(Task *task_i, Task **tasks)
 {
     int interference = 0;
@@ -252,6 +270,23 @@ int upper_bound_interference_from_hp(Task *task_i, Task **tasks)
     {
         Task *task = tasks[i];
         interference += (ceil((float)task_i->deadline / task->period) + 1) * task->duration;
+    }
+    return interference;
+}
+
+int upper_bound_interference_from_hp_risat(Task *task_k, Task **tasks)
+{
+    int interference = 0;
+    for (int i = 0; i < task_k->c_idx; i++)
+    {
+        Task *task_i = tasks[i];
+        if (task_i->maximum_inversion_budget <= 0) {
+            interference += (ceil((float)task_k->deadline / task_i->period)) * task_i->duration;
+            continue;
+        }
+
+        int Nk = floor((float)(task_k->deadline + task_i->maximum_inversion_budget) / (float)task_i->period);
+        interference += Nk * task_i->duration + MIN(task_i->duration, (task_k->deadline + task_i->maximum_inversion_budget - Nk * task_i->period));
     }
     return interference;
 }
