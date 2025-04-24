@@ -59,7 +59,6 @@ void debug(Core *core)
     }
 
     printf("\n");
-    exit(EXIT_FAILURE);
 }
 
 void time_step_core(Core *core)

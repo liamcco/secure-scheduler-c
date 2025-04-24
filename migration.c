@@ -49,11 +49,10 @@ void attempt_random_migration(Processor *processor) {
 
     TaskGroup *new_group = tasks->task_groups[new_core];
 
-    // Time this line
-    int migration_is_possible = RTA_test_with(new_group, task, &RM);
-    //int migration_is_possible = LL_test_with(new_group, task); <--- Does not work with jitter
+    int feasible = RTA_test_with(group, task, &RM);
+    int migration_is_possible = RTA_test_with_migration(group, task, &RM);
 
-    if (migration_is_possible) {
+    if (feasible && migration_is_possible) {
         // Task can switch. Make the switch
         // 1. Move tasks
         new_group->tasks[new_group->num_tasks] = group->tasks[task_idx];
