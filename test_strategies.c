@@ -12,20 +12,20 @@
 #include "opa.h"
 #include "scheduler.h" 
 
-Scheduler *init_scheduler_risat(void) {
+Scheduler *init_scheduler_push(void) {
     Scheduler *scheduler = init_scheduler_ts();
-    scheduler->risat_budget = 1;
+    scheduler->push_back = 1;
     return scheduler;
 }
 
-int sim_partition(Task **tasks, int n, double *result, int risat)
+int sim_partition(Task **tasks, int n, double *result, int push)
 {
 
     Scheduler *(*init_scheduler)(void);
 
-    if (risat)
+    if (push)
     {
-        init_scheduler = &init_scheduler_risat;
+        init_scheduler = &init_scheduler_push;
     }
     else
     {
@@ -38,7 +38,6 @@ int sim_partition(Task **tasks, int n, double *result, int risat)
     processor->log_timeslot_data = 1;
 
     processor->analyze = &analyze_simulation;
-
 
 
     int load_was_successful = load_tasks(processor, tasks, n, &ff);
@@ -68,6 +67,8 @@ int main(void)
     int n = 10; // Number of tasks
     int m = 1; // Number of bins
 
+    for (int i = 0; i < 10; i++)
+    {
     for (int u = 2; u < 81; u++)
     {
     double U = (double)u / 100.0;
@@ -119,6 +120,7 @@ int main(void)
     free_tasks(tasks, n);
     printf("\n");
 
+    }
     }
 
     return 0;
