@@ -231,11 +231,11 @@ int main(void)
         printf("\n");
     } */
 
-    double result[8];
+    /* double result[8];
     for (int i = 0; i < 8; i++)
     {
         result[i] = 0;
-    }
+    } */
 
     double results_h[total_assignments];
     double results_v[total_assignments];
