@@ -39,6 +39,7 @@ int sim_partition(Task **tasks, int n, double *result, int push)
 
     processor->analyze = &analyze_simulation;
 
+    prioritize(tasks, n, &IU);
 
     int load_was_successful = load_tasks(processor, tasks, n, &ff);
     if (!load_was_successful)
@@ -64,8 +65,8 @@ int main(void)
 {
     // printf("Starting...\n");
     srand(time(NULL) ^ clock());
-    int n = 10; // Number of tasks
-    int m = 1; // Number of bins
+    int n = 25; // Number of tasks
+    int m = 4; // Number of bins
 
     for (int i = 0; i < 10; i++)
     {
