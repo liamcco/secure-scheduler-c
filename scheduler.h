@@ -49,6 +49,7 @@ void task_completed_fp(Scheduler *scheduler, Task *task);
 void task_arrived_fp(Scheduler *scheduler, Task *task);
 void time_step_scheduler_fp(Scheduler *scheduler);
 void load_tasks_scheduler_fp(Scheduler *scheduler, Task **tasks, int num_tasks);
+void load_tasks_scheduler_mid(Scheduler *scheduler, Task **tasks, int num_tasks);
 
 Task *schedule_task_ts(Scheduler *scheduler);
 Task *pick_task(Scheduler *scheduler);

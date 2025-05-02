@@ -12,7 +12,7 @@ void debug_partition(Partition *tasks) {
         Task **core_tasks = tasks->task_groups[m]->tasks;
         for (int i = 0; i < tasks->task_groups[m]->num_tasks; i++) {
             Task *task = core_tasks[i];
-            printf("Task %d (T=%d C=%d U=%.2f R=%d) ", task->id, task->period, task->duration, task->utilization, task->remaining_deadline==task->time_until_next_period);
+            printf("Task %d (T=(%d of %d) C=(%d of %d))\n", task->id, task->period - task->time_until_next_period, task->period, task->duration - task->remaining_execution_time, task->duration);
         }
         printf("\n");
     }
@@ -48,9 +48,9 @@ void attempt_random_migration(Processor *processor) {
     }
 
     TaskGroup *new_group = tasks->task_groups[new_core];
-
-    int feasible = RTA_test_with(group, task, &RM);
-    int migration_is_possible = RTA_test_with_migration(group, task, &RM);
+    int (*new_scheduler_comp)(const void *, const void *) = processor->cores[new_core]->scheduler->compare;
+    int feasible = RTA_test_with(new_group, task, new_scheduler_comp);
+    int migration_is_possible = RTA_test_with_migration(new_group, task, new_scheduler_comp);
 
     if (feasible && migration_is_possible) {
         // Task can switch. Make the switch
@@ -64,8 +64,10 @@ void attempt_random_migration(Processor *processor) {
         }
         group->num_tasks--;
 
-        load_tasks_core(processor->cores[core], group);
-        load_tasks_core(processor->cores[new_core], new_group);
+        //debug_partition(processor->tasks);
+
+        load_tasks_core_mid(processor->cores[core], group);
+        load_tasks_core_mid(processor->cores[new_core], new_group);
     }
 }
 
@@ -73,7 +75,5 @@ void random_migration(Processor *processor) {
     if (processor->tasks->num_groups == 1)
         return;
 
-    for (int i = 0; i < 20; i++) {
-        attempt_random_migration(processor);
-    }
+    attempt_random_migration(processor);
 }

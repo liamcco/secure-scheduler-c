@@ -32,6 +32,19 @@ void load_tasks_core(Core *core, TaskGroup *group)
 
     load_tasks_scheduler(core->scheduler, group->tasks, group->num_tasks);
 }
+
+void load_tasks_core_mid(Core *core, TaskGroup *group)
+{
+    core->group = group;
+
+    for (int i = 0; i < group->num_tasks; i++)
+    {
+        group->tasks[i]->c_id = core->core_id;
+    }
+
+    load_tasks_scheduler_mid(core->scheduler, group->tasks, group->num_tasks);
+}
+
 Task *load_next_task(Core *core)
 {
     Task *selected_task = schedule_task(core->scheduler);

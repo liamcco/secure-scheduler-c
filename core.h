@@ -21,5 +21,6 @@ Task *load_next_task(Core *core);
 void execute_core(Core *core);
 void time_step_core(Core *core);
 void load_tasks_core(Core *core, TaskGroup *group);
+void load_tasks_core_mid(Core *core, TaskGroup *group);
 
 #endif // CORE_H

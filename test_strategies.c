@@ -18,7 +18,7 @@ Scheduler *init_scheduler_risat(void) {
     return scheduler;
 }
 
-int sim_partition(Task **tasks, int n, int m, double *result, int risat)
+int sim_partition(Task **tasks, int n, double *result, int risat)
 {
 
     Scheduler *(*init_scheduler)(void);
@@ -33,16 +33,15 @@ int sim_partition(Task **tasks, int n, int m, double *result, int risat)
     }
 
     // Initialize processor and load tasks
-    Processor *processor = init_processor_custom(m, init_scheduler);
+    Processor *processor = init_processor_custom(1, init_scheduler);
     processor->log_attack_data = 0;
     processor->log_timeslot_data = 1;
 
     processor->analyze = &analyze_simulation;
 
-    // Load tasks according to the given allocation
-    prioritize(tasks, n, &DU);
 
-    int load_was_successful = load_tasks(processor, tasks, n, &wf);
+
+    int load_was_successful = load_tasks(processor, tasks, n, &ff);
     if (!load_was_successful)
     {
         free_processor(processor);
@@ -66,10 +65,10 @@ int main(void)
 {
     // printf("Starting...\n");
     srand(time(NULL) ^ clock());
-    int n = 25; // Number of tasks
-    int m = 4; // Number of bins
+    int n = 10; // Number of tasks
+    int m = 1; // Number of bins
 
-    for (int u = 50; u < 81; u++)
+    for (int u = 2; u < 81; u++)
     {
     double U = (double)u / 100.0;
     int hyper_period = 3000;
@@ -100,12 +99,12 @@ int main(void)
         result[i] = 0;
     }
 
-    int success = sim_partition(tasks, n, m, result, 0);
+    int success = sim_partition(tasks, n, result, 0);
     if (!success) {
         continue;
     }
     double normal_h = result[7];
-    success = sim_partition(tasks, n, m, result, 1);
+    success = sim_partition(tasks, n, result, 1);
     if (!success) {
         continue;
     }

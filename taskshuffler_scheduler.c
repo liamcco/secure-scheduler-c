@@ -59,6 +59,29 @@ void load_tasks_scheduler_ts(Scheduler *scheduler, Task **tasks, int num_tasks)
     }
 }
 
+void load_tasks_scheduler_mid(Scheduler *scheduler, Task **tasks, int num_tasks)
+{
+    scheduler->tasks = tasks;
+    scheduler->num_tasks = num_tasks;
+    scheduler->idle_task->c_idx = num_tasks;
+    scheduler->to_schedule = 0;
+
+    if (scheduler->compare)
+        prioritize(tasks, num_tasks, scheduler->compare);
+
+    for (int i = 0; i < num_tasks; i++)
+    {
+        Task *task = tasks[i];
+
+        task->c_idx = i;
+        if (scheduler->risat_budget)
+            task->maximum_inversion_budget = worst_case_maximum_inversion_budget_risat(task, tasks);
+        else
+            task->maximum_inversion_budget = worst_case_maximum_inversion_budget(task, tasks);
+        task->remaining_inversion_budget = 0;
+    }
+}
+
 Task *schedule_task_ts(Scheduler *scheduler)
 {
     // Check if it's time to schedule new task
@@ -116,7 +139,7 @@ Task *pick_task(Scheduler *scheduler)
     if (selection->remaining_inversion_budget <= 0)
     {
         scheduler->to_schedule = selection->remaining_execution_time;
-        if (scheduler->push_back && selection->remaining_execution_time > 0)
+        if (scheduler->push_back && selection->remaining_execution_time > 1)
         {
             scheduler->to_schedule--;
         }

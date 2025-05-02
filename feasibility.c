@@ -5,6 +5,7 @@
 #include "feasibility.h"
 #include "math.h"
 #include "opa.h"
+#include "priority.h"
 
 
 int RTA_custom(Task **tasks, int num_tasks, int (*compare)(const void *, const void *), int migration)
@@ -125,8 +126,10 @@ int RTA_test_with_custom_OPA(TaskGroup *group, Task *task, int (*compare)(const 
     }
     tasks_copy[num_tasks] = task;
 
-    if (compare)
-        OPA_with_priority(tasks_copy, num_tasks + 1, compare);
+    if (compare) // If scheduler has strict rule, make sure to follow it
+        prioritize(tasks_copy, num_tasks + 1, compare);
+    else // If scheduler has no strict rule, use OPA
+        OPA_random(tasks_copy, num_tasks + 1);
 
     int feasible = RTA_custom(tasks_copy, num_tasks + 1, NULL, migration);
     

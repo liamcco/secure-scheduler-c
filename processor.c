@@ -193,7 +193,8 @@ int run(Processor *processor, int hyperperiod, int num_hyperperiods, double *res
         log_execution(processor, t);
         time_step_processor(processor);
 
-        if (t % hyperperiod == hyperperiod - 1) {
+        //if (t % hyperperiod == hyperperiod - 1) {
+        if (t % 100 == 0) {
             if (processor->migration)
                 random_migration(processor);
             
