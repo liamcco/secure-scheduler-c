@@ -49,10 +49,14 @@ int response_time_custom(Task *task, Task **hp_set, int num_tasks, int migration
     int wcrt;
 
     int base;
-    if (migration)
+    if (migration) {
         base = task->remaining_execution_time;
-    else
+        if (task->remaining_execution_time == task->duration)
+            base += task->max_jitter;
+    }
+    else {
         base = task->duration + task->max_jitter;
+    }
 
     int deadline;
     if (migration)

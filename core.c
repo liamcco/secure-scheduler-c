@@ -40,6 +40,7 @@ void load_tasks_core_mid(Core *core, TaskGroup *group)
     for (int i = 0; i < group->num_tasks; i++)
     {
         group->tasks[i]->c_id = core->core_id;
+        group->tasks[i]->c_idx = i;
     }
 
     load_tasks_scheduler_mid(core->scheduler, group->tasks, group->num_tasks);

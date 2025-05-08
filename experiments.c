@@ -22,20 +22,14 @@ void calculate_schedule_entropy_horizontal(Processor *processor, double *result)
 
         if (num_tasks == 0)
             continue;
-        
-        int idx_of_idle = i;
 
         for (int k = 0; k < hyperperiod; k++)   // for every timeslot
         {
             double entropy = 0;
-            double p = (double)t_data[k * num_all_tasks + idx_of_idle] / (num_periods);
-            if (p > 0)
-                entropy -= p * log2(p);
 
-            for (int j = 0; j < num_tasks; j++)
+            for (int j = 0; j < num_all_tasks; j++)
             {
-                int idx = tasks->tasks[j]->idx + processor->m;
-                double p = (double)t_data[k * num_all_tasks + idx] / (num_periods);
+                double p = (double)t_data[k * num_all_tasks + j] / (num_periods);
                 if (p > 0)
                     entropy -= p * log2(p);
             }

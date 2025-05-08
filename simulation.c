@@ -167,7 +167,7 @@ void log_execution(Processor *processor, int time)
         // Attack Data
         if (log_attack_data)
         {
-            int executed_idx = processor->ready_tasks[i]->idx;
+            int executed_idx = task->idx;
             if (executed_idx == -1)
                 continue;
 
@@ -185,14 +185,14 @@ void log_execution(Processor *processor, int time)
                 if (will_execute)
                     continue;
 
-                int same_core = tasks[j]->c_idx == task->c_idx;
+                int same_core = tasks[j]->c_id == task->c_id;
                 // Only considers attacks on same core...
-                if (is_fresh(tasks[j]) && same_core) {
+                if (is_fresh(tasks[j])) {
                     attack_data[j].current_anteriors[executed_idx] = 1;
                     if (same_core)
                         attack_data_h[j].current_anteriors[executed_idx] = 1;
                 }
-                if (is_complete(tasks[j]) && same_core) {
+                if (is_complete(tasks[j])) {
                     attack_data[j].current_posteriors[executed_idx] = 1;
                     if (same_core)
                         attack_data_h[j].current_posteriors[executed_idx] = 1;

@@ -10,6 +10,6 @@ void reprioritze(Processor *processor)
         int num_tasks = group->num_tasks;
         OPA_random(group->tasks, num_tasks);
         processor->cores[i]->scheduler->compare = NULL;
-        load_tasks_core(processor->cores[i], group);
+        load_tasks_core_mid(processor->cores[i], group);
     }
 }
