@@ -125,7 +125,7 @@ int OPA_random(Task **tasks, int num_tasks)
             }
 
             // Check if candidate is schedulable with the remaining tasks
-            if (response_time(candidate, subset, num_tasks - assigned - 1))
+            if (response_time(candidate, subset, num_tasks - assigned - 1), response_time_migration(candidate, subset, num_tasks - assigned - 1))
             {
                 candidates[num_candidates++] = candidate;
             }

@@ -116,10 +116,9 @@ int main(void)
 
     int hyper_period = 3000;
 
-    int n = 6;
+    int n = 5;
 
-    printf("n=%d, m=1\n", n);
-
+    for (int i = 0; i < 8; i++) {
     for (int u = 2; u < 85; u++) {
 
     double U = (double)u / 100.0;
@@ -188,24 +187,24 @@ int main(void)
     qsort(results_v, current, sizeof(double), &compare);
 
     double min_h = results_h[0];
-    //double min_v = results_v[0];
+    double min_v = results_v[0];
     double max_h = results_h[current - 1];
-    //double max_v = results_v[current - 1];
+    double max_v = results_v[current - 1];
     double avg_h = 0;
-    //double avg_v = 0;
+    double avg_v = 0;
     for (int i = 0; i < current; i++)
     {
         avg_h += results_h[i];
-        //avg_v += results_v[i];
+        avg_v += results_v[i];
     }
     avg_h /= current;
-    //avg_v /= current;
+    avg_v /= current;
 
     printf("U=%.2f,", actual_U);
     printf("Min_h=%.3f,", min_h / max_h);
-    //printf("Min_v=%.3f,", min_v / max_v);
+    printf("Min_v=%.3f,", min_v / max_v);
     printf("Avg_h=%.3f,", avg_h / max_h);
-    //printf("Avg_v=%.3f,", avg_v / max_v);
+    printf("Avg_v=%.3f,", avg_v / max_v);
 
 
     double result[8];
@@ -220,45 +219,46 @@ int main(void)
     int success = try_simulation(tasks, n, result); // Run simulation with RM
     if (success)
     {
-        printf("RM=%.3f,", result[6] / max_h);
-        //printf("RM_v=%.3f,", result[7] / max_v);
+        printf("RM_h=%.3f,", result[6] / max_h);
+        printf("RM_v=%.3f,", result[7] / max_v);
     }
 
     OPA_with_priority(tasks, n, &IU);
     success = try_simulation(tasks, n, result); // Run simulation with IU
     if (success)
     {
-        printf("IU=%.3f,", result[6] / max_h);
-        //printf("IU_v=%.3f,", result[7] / max_v);
+        printf("DU_h=%.3f,", result[6] / max_h);
+        printf("DU_v=%.3f,", result[7] / max_v);
     }
 
     OPA_with_priority(tasks, n, &DU);
     success = try_simulation(tasks, n, result); // Run simulation with DU
     if (success)
     {
-        printf("DU=%.3f,", result[6] / max_h);
-        //printf("DU_v=%.3f,", result[7] / max_v);
+        printf("IU_h=%.3f,", result[6] / max_h);
+        printf("IU_v=%.3f,", result[7] / max_v);
     }
 
     OPA_with_priority(tasks, n, &SM);
     success = try_simulation(tasks, n, result); // Run simulation with SM
     if (success)
     {
-        printf("SM=%.3f,", result[6] / max_h);
-        //printf("SM_v=%.3f,", result[7] / max_v);
+        printf("RSM_h=%.3f,", result[6] / max_h);
+        printf("RSM_v=%.3f,", result[7] / max_v);
     }
 
     OPA_with_priority(tasks, n, &RSM);
     success = try_simulation(tasks, n, result); // Run simulation with RSM
     if (success)
     {
-        printf("RSM=%.3f,", result[6] / max_h);
-        //printf("RSM_v=%.3f,", result[7] / max_v);
+        printf("SM_h=%.3f,", result[6] / max_h);
+        printf("SM_v=%.3f,", result[7] / max_v);
     }
 
     printf("\n");
     free_tasks(tasks, n);
 
+    }
     }
     
     return 0;

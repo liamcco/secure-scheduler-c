@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <math.h>
 
 #include "task.h"
 #include "processor.h"
@@ -11,7 +12,7 @@
 #include "priority.h"
 
 // Litmus test
-void sim_allocation(int n, int m, Task **tasks, int *allocation, double *result)
+int sim_allocation(int n, int m, Task **tasks, int *allocation, double *result)
 {
     int hyper_period = 3000;
 
@@ -27,7 +28,7 @@ void sim_allocation(int n, int m, Task **tasks, int *allocation, double *result)
     if (!load_was_successful)
     {
         free_processor(processor);
-        return;
+        return 0;
     }
 
     // print task partition
@@ -53,7 +54,7 @@ void sim_allocation(int n, int m, Task **tasks, int *allocation, double *result)
     run(processor, hyper_period, 1000, result);
 
     free_processor(processor);
-    return;
+    return 1;
 }
 
 // Recursive function to generate unique task assignments
@@ -62,7 +63,7 @@ void generate_allocations(int n, int m, int task, int allocation[], int max_bin,
     if (task == n)
     { // Base case: all tasks assigned
         
-        /*printf("\n[ ");
+        /* printf("\n %d: [ ", *current);
         for (int i = 0; i < n; i++)
         {
             printf("%d ", allocation[i]);
@@ -76,9 +77,9 @@ void generate_allocations(int n, int m, int task, int allocation[], int max_bin,
             result[i] = -1;
         }
 
-        sim_allocation(n, m, tasks, allocation, result);
+        int success = sim_allocation(n, m, tasks, allocation, result);
 
-        if (result[6] == -1)
+        if (!success)
         {
             return;
         }
@@ -91,10 +92,10 @@ void generate_allocations(int n, int m, int task, int allocation[], int max_bin,
     }
 
     // Assign task to an existing bin or the next available bin
-    for (int bin = 1; bin <= max_bin + 1 && bin <= m; bin++)
+    for (int bin = 1; bin <= max_bin && bin <= m; bin++)
     {
         allocation[task] = bin;
-        generate_allocations(n, m, task + 1, allocation, (bin > max_bin) ? max_bin + 1 : max_bin, tasks, results_h, results_v, current);
+        generate_allocations(n, m, task + 1, allocation, max_bin, tasks, results_h, results_v, current);
     }
 }
 
@@ -102,7 +103,7 @@ void generate_allocations(int n, int m, int task, int allocation[], int max_bin,
 void generate_unique_allocations(int n, int m, Task **tasks, double results_h[], double results_v[], int *current)
 {
     int allocation[n]; // Array to store current allocation
-    generate_allocations(n, m, 0, allocation, 0, tasks, results_h, results_v, current);
+    generate_allocations(n, m, 0, allocation, 3, tasks, results_h, results_v, current);
 }
 
 // Stirling numbers of the second kind using dynamic programming
@@ -175,7 +176,7 @@ int sim_partition_ff50(Task **tasks, int n, int m, double *result)
     processor->analyze = &analyze_simulation;
 
     // Load tasks according to the given allocation
-    prioritize(tasks, n, compare);
+    prioritize(tasks, n, &RM);
     int load_was_successful = load_tasks_with_algorithm_argument(processor, tasks, n, &ff_50percent_custom, 0.5);
     if (!load_was_successful)
     {
@@ -202,10 +203,11 @@ int main(void)
     // printf("Starting...\n");
     srand(time(NULL) ^ clock());
     int n = 5; // Number of tasks
-    int m = 3; // Number of bins
-    long long total_assignments = count_unique_allocations(n, m);
+    int m = 2; // Number of bins
+    long long total_assignments = pow(m, n); //count_unique_allocations(n, m);
     //printf("Total unique assignments: %lld\n", total_assignments);
     //printf("n=%d,m=%d,Total unique assignments: %lld\n", n, m, total_assignments);
+    for (int i = 0; i < 20; i++) {
     for (int u = 2; u < 81; u++)
     {
     double U = (double)u / 100.0;
@@ -231,11 +233,11 @@ int main(void)
         printf("\n");
     } */
 
-    /* double result[8];
+    double result[8];
     for (int i = 0; i < 8; i++)
     {
         result[i] = 0;
-    } */
+    }
 
     double results_h[total_assignments];
     double results_v[total_assignments];
@@ -274,8 +276,6 @@ int main(void)
     printf("Avg_h=%.3f,", avg_h / max_h);
     printf("Avg_v=%.3f,", avg_v / max_v);
 
-
-    /*
     int success = sim_partition(tasks, n, m, result, &wf, &RM);
     if (success) {
         printf("WF-RM_h=%.3f,", result[6] / max_h);
@@ -330,13 +330,18 @@ int main(void)
     if (success) {
         printf("WF-minm2_h=%.3f,", result[6] / max_h);
         printf("WF-minm2_v=%.3f,", result[7] / max_v);
-    } */
-    
+    }
+    success = sim_partition_ff50(tasks, n, m, result);
+    if (success) {
+        printf("FF50_h=%.3f,", result[6] / max_h);
+        printf("FF50_v=%.3f,", result[7] / max_v);
+    }
 
     free_tasks(tasks, n);
     printf("\n");
 
     }
+}
 
     return 0;
 }

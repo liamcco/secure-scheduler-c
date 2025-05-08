@@ -44,7 +44,6 @@ int main(void)
 {
     // random seed using current time
     srand(time(NULL) ^ clock());
-    srand(0);
 
     int hyper_period = 3000;
     int n = 10;

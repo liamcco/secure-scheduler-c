@@ -18,7 +18,20 @@ Scheduler *init_scheduler_push(void) {
     return scheduler;
 }
 
-int sim_partition(Task **tasks, int n, double *result, int push)
+Scheduler *init_scheduler_risat(void) {
+    Scheduler *scheduler = init_scheduler_ts();
+    scheduler->risat_budget= 1;
+    return scheduler;
+}
+
+Scheduler *init_scheduler_risat_push(void) {
+    Scheduler *scheduler = init_scheduler_ts();
+    scheduler->push_back = 1;
+    scheduler->risat_budget = 1;
+    return scheduler;
+}
+
+int sim_partition(Task **tasks, int n, double *result, int push, int risat, int reprioritize)
 {
 
     Scheduler *(*init_scheduler)(void);
@@ -27,21 +40,31 @@ int sim_partition(Task **tasks, int n, double *result, int push)
     {
         init_scheduler = &init_scheduler_push;
     }
-    else
+    else if (risat)
+    {
+        init_scheduler = &init_scheduler_risat;
+    }
+    else if (risat && push)
+    {
+        init_scheduler = &init_scheduler_risat_push;
+    }
+    else 
     {
         init_scheduler = &init_scheduler_ts;
     }
+    
 
     // Initialize processor and load tasks
     Processor *processor = init_processor_custom(1, init_scheduler);
     processor->log_attack_data = 0;
     processor->log_timeslot_data = 1;
+    processor->reprioritize = reprioritize;
 
     processor->analyze = &analyze_simulation;
 
-    prioritize(tasks, n, &IU);
+    prioritize(tasks, n, &DU);
 
-    int load_was_successful = load_tasks(processor, tasks, n, &ff);
+    int load_was_successful = load_tasks(processor, tasks, n, &wfminm2);
     if (!load_was_successful)
     {
         free_processor(processor);
@@ -65,10 +88,12 @@ int main(void)
 {
     // printf("Starting...\n");
     srand(time(NULL) ^ clock());
-    int n = 25; // Number of tasks
-    int m = 4; // Number of bins
+    //int n = 10; // Number of tasks
+    int m = 1; // Number of bins
 
-    for (int i = 0; i < 10; i++)
+
+    for (int n = 5; n <= 13; n += 2) {
+    for (int i = 0; i < 5; i++)
     {
     for (int u = 2; u < 81; u++)
     {
@@ -101,26 +126,70 @@ int main(void)
         result[i] = 0;
     }
 
-    int success = sim_partition(tasks, n, result, 0);
+    // push, risat, reprioritze
+
+    int success = sim_partition(tasks, n, result, 0, 0, 0);
     if (!success) {
         continue;
     }
-    double normal_h = result[7];
-    success = sim_partition(tasks, n, result, 1);
+    double normal = result[6];
+
+    success = sim_partition(tasks, n, result, 0, 0, 1);
     if (!success) {
         continue;
     }
-    double risat_h = result[7];
+    double rep = result[6] / normal;
 
-    double result_h = risat_h / normal_h;
+    success = sim_partition(tasks, n, result, 0, 1, 0);
+    if (!success) {
+        continue;
+    }
+    double risat = result[6] / normal;
 
-    printf("U=%.2f,", actual_U);
+    success = sim_partition(tasks, n, result, 1, 0, 0);
+    if (!success) {
+        continue;
+    }
+    double push = result[6] / normal;
 
-    printf("result_v=%.3f,", result_h);
+    success = sim_partition(tasks, n, result, 1, 1, 0);
+    if (!success) {
+        continue;
+    }
+    double push_risat = result[6] / normal;
+
+    success = sim_partition(tasks, n, result, 0, 1, 1);
+    if (!success) {
+        continue;
+    }
+    double rep_risat = result[6] / normal;
+
+    success = sim_partition(tasks, n, result, 1, 0, 1);
+    if (!success) {
+        continue;
+    }
+    double rep_push = result[6] / normal;
+
+    success = sim_partition(tasks, n, result, 1, 1, 1);
+    if (!success) {
+        continue;
+    }
+    double push_risat_rep = result[6] / normal;
+
+    printf("U=%.2f,n=%d,", actual_U, n);
+
+    printf("rep=%.3f,", rep);
+    printf("risat=%.3f,", risat);
+    printf("push=%.3f,", push);
+    printf("push_risat=%.3f,", push_risat);
+    printf("rep_risat=%.3f,", rep_risat);
+    printf("rep_push=%.3f,", rep_push);
+    printf("push_risat_rep=%.3f,", push_risat_rep);
 
     free_tasks(tasks, n);
     printf("\n");
 
+    }
     }
     }
 

@@ -18,13 +18,36 @@ Scheduler *init_scheduler_ts_with_push_back(void)
     return scheduler;
 }
 
-int sim_partition(Task **tasks, int n, int m, double *result, int reprioritize, int migration, int push_back)
+Scheduler *init_scheduler_ts_with_risat(void)
+{
+    Scheduler *scheduler = init_scheduler_ts();
+    scheduler->risat_budget = 1;
+    return scheduler;
+}
+
+Scheduler *init_scheduler_ts_with_push_risat(void)
+{
+    Scheduler *scheduler = init_scheduler_ts();
+    scheduler->push_back = 1;
+    scheduler->risat_budget = 1;
+    return scheduler;
+}
+
+int sim_partition(Task **tasks, int n, int m, double *result, int reprioritize, int migration, int push_back, int risat)
 {
     Scheduler *(*init_scheduler)(void);
 
     if (push_back)
     {
         init_scheduler = &init_scheduler_ts_with_push_back;
+    }
+    else if (risat)
+    {
+        init_scheduler = &init_scheduler_ts_with_risat;
+    }
+    else if (risat && push_back)
+    {
+        init_scheduler = &init_scheduler_ts_with_push_risat;
     }
     else
     {
@@ -71,6 +94,7 @@ int main(void)
     int m = 4; // Number of bins
 
     for (int f = 4; f <= 20; f+=4) {
+    for (int e=0; e < 5; e++) {
     double fraction_untrusted = (double)f / 100.0;
     for (int u = 2; u < 81; u++)
     {
@@ -124,22 +148,21 @@ int main(void)
     printf("U=%.2f,", actual_U);
     printf("f=%.2f,", (double)num_untrusted_tasks / (double)n);
 
-    int success = sim_partition(tasks, n, m, result, 0, 0, 0);
-    if (success) {
-        printf("X_an=%.3f,", result[0]);
-        printf("X_po=%.3f,", result[1]);
-        printf("X_pi=%.3f,", result[2]);
-        printf("X_h=%.3f,", result[6]);
-        printf("X_v=%.3f,", result[7]);
+    for (int a = 0; a <= 1; a++) {
+    for (int b = 0; b <= 1; b++) {
+    for (int c = 0; c <= 1; c++) {
+    for (int d = 0; d <= 1; d++) {
+        int success = sim_partition(tasks, n, m, result, a, b, c, d);
+        if (success) {
+            printf("X%d%d%d%d=(", a, b, c, d);
+            for (int i = 0; i < 8; i++) {
+                printf("%.3f,", result[i]);
+            }
+            printf("),");
+        }
     }
-
-    success = sim_partition(tasks, n, m, result, 1, 1, 1);
-    if (success) {
-        printf("XRMP_an=%.3f,", result[0]);
-        printf("XRMP_po=%.3f,", result[1]);
-        printf("XRMP_pi=%.3f,", result[2]);
-        printf("XRMP_h=%.3f,", result[6]);
-        printf("XRMP_v=%.3f,", result[7]);
+    }
+    }
     }
 
 
@@ -147,6 +170,7 @@ int main(void)
     printf("\n");
 
     }
+}
 }
 
     return 0;

@@ -29,7 +29,7 @@ int main(void)
 
     int hyper_period = 3000;
 
-    for (int i = 0; i < 1; i++)
+    for (int i = 0; i < 5; i++)
     {
         for (int n_idx = 0; n_idx < 6; n_idx++)
         {
