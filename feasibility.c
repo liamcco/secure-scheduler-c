@@ -71,7 +71,7 @@ int response_time_custom(Task *task, Task **hp_set, int num_tasks, int migration
         for (int i = 0; i < num_tasks; i++)
         {
             Task *t = hp_set[i];
-            wcrt_guess += ceil((float)(wcrt + t->max_jitter) / (float)t->period) * t->duration;
+            wcrt_guess += migration * t->remaining_execution_time + ((float)(wcrt + (1 - migration) * t->max_jitter - migration * t->remaining_execution_time) / (float)t->period) * t->duration;
         }
 
         if (wcrt_guess > deadline)
