@@ -31,6 +31,9 @@ typedef struct Processor
 
     SimulationData *simulation;
 
+    int debug;
+    int t_mitigation;
+
 } Processor;
 
 Processor *init_processor(int m);

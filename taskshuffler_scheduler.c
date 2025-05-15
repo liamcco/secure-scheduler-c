@@ -15,7 +15,7 @@ Scheduler *init_scheduler_ts(void)
 
     scheduler->idle_task = init_idle_task();
     scheduler->to_schedule = 0;
-    scheduler->previous_task = NULL;
+    scheduler->previous_task = scheduler->idle_task;
     scheduler->push_back = 0;
     scheduler->risat_budget = 0;
     scheduler->adjust_budget = 0;
@@ -78,7 +78,7 @@ void load_tasks_scheduler_mid(Scheduler *scheduler, Task **tasks, int num_tasks)
             task->maximum_inversion_budget = worst_case_maximum_inversion_budget_risat(task, tasks);
         else
             task->maximum_inversion_budget = worst_case_maximum_inversion_budget(task, tasks);
-        task->remaining_inversion_budget = 0;
+        task->remaining_inversion_budget = worst_case_maximum_inversion_budget_migration(task, tasks);
     }
 }
 
@@ -230,10 +230,6 @@ void task_arrived_ts(Scheduler *scheduler, Task *task)
     if (scheduler->adjust_budget) {
         task->remaining_inversion_budget += task->max_jitter - (task->period - task->time_until_next_period);
     }
-        
-
-    
-    
 }
 
 void time_step_scheduler_ts(Scheduler *scheduler)
@@ -284,6 +280,27 @@ int worst_case_maximum_inversion_budget(Task *task_i, Task **tasks)
 int worst_case_maximum_inversion_budget_risat(Task *task_i, Task **tasks)
 {
     return task_i->deadline - (task_i->duration + task_i->max_jitter + upper_bound_interference_from_hp_risat(task_i, tasks));
+}
+
+int upper_bound_interference_from_hp_migration(Task *task_i, Task **tasks) 
+{
+    int interference = 0;
+    for (int i = 0; i < task_i->c_idx; i++)
+    {
+        Task *task = tasks[i];
+        interference += task->remaining_execution_time + ceil((float)(task_i->remaining_deadline - task->time_until_next_period) / (float)task->period) * task->duration;
+    }
+    return interference;
+}
+
+int worst_case_maximum_inversion_budget_migration(Task *task_i, Task **tasks)
+{
+    int remaining_jitter = 0;
+    if (!is_ready(task_i) && task_i->remaining_execution_time > 0)
+    {
+        remaining_jitter = task_i->max_jitter - (task_i->period - task_i->time_until_next_period);
+    }  
+    return task_i->remaining_deadline - (task_i->remaining_execution_time + remaining_jitter + upper_bound_interference_from_hp_migration(task_i, tasks));
 }
 
 int upper_bound_interference_from_hp(Task *task_i, Task **tasks)

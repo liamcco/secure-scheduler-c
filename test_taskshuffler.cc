@@ -33,7 +33,7 @@ int main(void)
     {
         for (int n_idx = 0; n_idx < 6; n_idx++)
         {
-            for (int u = 0; u < 9; u++)
+            for (int u = 0; u < 10; u++)
             {
 
                 int n = numOfTasks[n_idx];

@@ -92,9 +92,9 @@ int main(void)
     int m = 1; // Number of bins
 
 
-    for (int n = 5; n <= 13; n += 2) {
     for (int i = 0; i < 5; i++)
     {
+    for (int n = 5; n <= 13; n += 2) {
     for (int u = 2; u < 81; u++)
     {
     double U = (double)u / 100.0;

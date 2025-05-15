@@ -9,118 +9,91 @@
 #include "experiments.h"
 #include "feasibility.h"
 #include "priority.h"
+#include "opa.h"
 
-// Litmus test
-double sim(int n, int m, Task **tasks, int *allocation)
+Scheduler *init_scheduler_ts_with_push_back(void)
 {
-    int hyper_period = 3000;
+    Scheduler *scheduler = init_scheduler_ts();
+    scheduler->push_back = 1;
+    return scheduler;
+}
 
-    Processor *processor = init_processor_custom(m, &init_scheduler_ts);
+Scheduler *init_scheduler_ts_with_risat(void)
+{
+    Scheduler *scheduler = init_scheduler_ts();
+    scheduler->risat_budget = 1;
+    return scheduler;
+}
 
+Scheduler *init_scheduler_ts_with_push_risat(void)
+{
+    Scheduler *scheduler = init_scheduler_ts();
+    scheduler->push_back = 1;
+    scheduler->risat_budget = 1;
+    scheduler->adjust_budget = 1;
+    return scheduler;
+}
+
+int sim_partition(Task **tasks, int n, int m, double *result, int reprioritize, int migration, int push_back, int risat)
+{
+    Scheduler *(*init_scheduler)(void);
+
+    if (push_back)
+    {
+        init_scheduler = &init_scheduler_ts_with_push_back;
+    }
+    else if (risat)
+    {
+        init_scheduler = &init_scheduler_ts_with_risat;
+    }
+    else if (risat && push_back)
+    {
+        init_scheduler = &init_scheduler_ts_with_push_risat;
+    }
+    else
+    {
+        init_scheduler = &init_scheduler_ts;
+    }
+
+    // Initialize processor and load tasks
+    Processor *processor = init_processor_custom(m, init_scheduler);
     processor->log_attack_data = 1;
     processor->log_timeslot_data = 1;
+    processor->reprioritize = reprioritize;
+    processor->migration = migration;
     processor->analyze = &analyze_simulation;
+    processor->t_mitigation = 500;
 
-    int load_was_successful = load_tasks_from_allocation(processor, tasks, n, allocation);
-
+    // Load tasks according to the given allocation
+    prioritize(tasks, n, &DU);
+    int load_was_successful = load_tasks(processor, tasks, n, &wf);
     if (!load_was_successful)
     {
         free_processor(processor);
         return 0;
     }
 
-    // print task partition
-    /* for (int i = 0; i < m; i++)
-    {
-        TaskGroup *group = processor->tasks->task_groups[i];
-        printf("Core %d: ", i);
-        printf("U=%.2f - ", group->utilization);
-        for (int j = 0; j < group->num_tasks; j++)
-        {
-            printf("%d\t", group->tasks[j]->id);
-        }
-
-        printf("\n");
-    } */
-
-    double result[8];
-    run(processor, hyper_period, 1000, result);
-
-    free_processor(processor);
-
-    return result[7];
-}
-
-// Recursive function to generate unique task assignments
-void generate_allocations(int n, int m, int task, int allocation[], int max_bin, Task **tasks, double results[], int *current)
-{
-    if (task == n)
-    { // Base case: all tasks assigned
-        /* printf("\n[ ");
-        for (int i = 0; i < n; i++)
-        {
-            printf("%d ", allocation[i]);
-        }
-        printf("]\n"); */
-        double result = sim(n, m, tasks, allocation);
-        if (result == 0)
-        {
-            return;
-        }
-        results[*current] = result;
-        *current = *current + 1;
-        // printf("Result: %f\n", result);
-        return;
-    }
-
-    // Assign task to an existing bin or the next available bin
-    for (int bin = 1; bin <= max_bin + 1 && bin <= m; bin++)
-    {
-        allocation[task] = bin;
-        generate_allocations(n, m, task + 1, allocation, (bin > max_bin) ? max_bin + 1 : max_bin, tasks, results, current);
-    }
-}
-
-// Wrapper function to start recursion
-void generate_unique_allocations(int n, int m, Task **tasks, double results[], int *current)
-{
-    int allocation[n]; // Array to store current allocation
-    generate_allocations(n, m, 0, allocation, 0, tasks, results, current);
-}
-
-// Function to compute factorial of a number
-long long factorial(int x)
-{
-    long long result = 1;
-    for (int i = 2; i <= x; i++)
-    {
-        result *= i;
-    }
-    return result;
-}
-
-// Function to compute T(n, m) = (m^n) / m!
-long long count_unique_allocations(int n, int m)
-{
-    if (m > n)
-        m = n; // More bins than tasks is redundant
-    long long total_assignments = 1;
-
-    // Compute m^n (total assignments without considering bin symmetry)
     for (int i = 0; i < n; i++)
     {
-        total_assignments *= m;
+        reset(tasks[i]);
     }
+        // print task partition
+        /* for (int i = 0; i < m; i++)
+        {
+            for (int j = 0; j < n; j++)
+            {
+                printf("%d (T=%d C=%d U=%.2f)\n", tasks[j]->id, tasks[j]->period, tasks[j]->duration, tasks[j]->utilization);
+            }
+            printf("\n");
+        } */
 
-    // Divide by m! to account for interchangeable bins
-    return total_assignments / factorial(m);
-}
+    // Run simulation
+    run(processor, 3000, 10, result);
+    //printf("Result: %.3f\n", result[6]);
+    // Reset tasks
 
-// Comparison function for qsort
-int compare(const void *a, const void *b)
-{
-    double diff = *(double *)a - *(double *)b;
-    return (diff > 0) - (diff < 0); // Returns -1, 0, or 1
+    free_processor(processor);
+    return 1;
 }
 
 // Example usage
@@ -128,96 +101,75 @@ int main(void)
 {
     // printf("Starting...\n");
     srand(time(NULL) ^ clock());
-    int n = 5; // Number of tasks
-    int m = 3; // Number of bins
-    long long total_assignments = count_unique_allocations(n, m);
-    // printf("Total unique assignments: %lld\n", total_assignments);
-    for (int Uidx = 5; Uidx < 90; Uidx += 5)
+    int n = 10; // Number of tasks
+    int m = 1; // Number of bins
+
+    for (int f = 4; f <= 20; f+=4) {
+    double fraction_untrusted = (double)f / 100.0;
+    for (int u = 2; u < 80; u++)
     {
-        double U = Uidx / 100.0;
+    for (int e = 0; e < 50; e++) {
+    double U = (double)u / 100.0;
+    int hyper_period = 3000;
 
-        int hyper_period = 3000;
+    Task **tasks = generate_task_set(n, U * m, hyper_period, 1, 50);
 
-        Task **tasks = generate_task_set(n, U * m, hyper_period, 1, 50);
-        prioritize(tasks, n, &IU);
-        int untrusted_idx = 0;
-        tasks[untrusted_idx]->trusted = 0;
-
-        prioritize(tasks, n, &RM);
-
-        double actual_U = 0;
-        for (int i = 0; i < n; i++)
-        {
-            actual_U += tasks[i]->utilization;
-        }
-
-        // compare with WF-DU
-        Processor *processor = init_processor_custom(m, &init_scheduler_fp);
-
-        processor->log_attack_data = 1;
-        processor->log_timeslot_data = 1;
-        processor->analyze = &analyze_simulation;
-
-        // int load_was_successful = load_tasks_with_algorithm_argument(processor, tasks, n, &ff_50percent_custom, 0.50);
-        int load_was_successful = load_tasks(processor, tasks, n, &wf);
-
-        if (!load_was_successful)
-        {
-            free_processor(processor);
-            free_tasks(tasks, n);
-            continue;
-        }
-
-        // print task partition
-        /* for (int i = 0; i < m; i++)
-        {
-            TaskGroup *group = processor->tasks->task_groups[i];
-            printf("Core %d: ", i);
-            printf("U=%.2f - ", group->utilization);
-            for (int j = 0; j < group->num_tasks; j++)
-            {
-                printf("%d (T=%d C=%d U=%.2f)\t", group->tasks[j]->id, group->tasks[j]->period, group->tasks[j]->duration, group->tasks[j]->utilization);
-            }
-
-            printf("\n");
-        } */
-
-        double result[8];
-        double results[total_assignments + 1];
-        int current = 0;
-
-        run(processor, hyper_period, 1000, result);
-        results[current] = result[7];
-        current++;
-        double ff = results[0];
-        //printf("CP1=%.3f\n", ff);
-
-        free_processor(processor);
-
-        // Do everyting
-        generate_unique_allocations(n, m, tasks, results, &current);
-
-        free_tasks(tasks, n);
-
-        // sort results
-        qsort(results, current, sizeof(double), &compare);
-
-        double median = results[current / 2];
-        double min = results[0];
-        double max = results[current - 1];
-        double avg = 0;
-        for (int i = 0; i < current; i++)
-        {
-            avg += results[i];
-        }
-        avg /= current;
-        printf("U=%.2f,", actual_U);
-        printf("ANTWF=%.3f,", ff / max);
-        printf("Med=%.3f,", median / max);
-        printf("Min=%.3f,", min / max);
-        printf("Avg=%.3f", avg / max);
-        printf("\n");
+    double actual_U = 0;
+    for (int i = 0; i < n; i++)
+    {
+        actual_U += tasks[i]->utilization;
     }
+
+    // Randomply select n*0.5 indexes in tasks and make them untrusted
+    int num_untrusted = (int)(n * fraction_untrusted);
+    for (int i = 0; i < num_untrusted; i++)
+    {
+        int index = rand() % n;
+        tasks[index]->trusted = 0;
+    }
+    // num of untrusted tasks
+    int num_untrusted_tasks = 0;
+    for (int i = 0; i < n; i++)
+    {
+        if (tasks[i]->trusted == 0)
+        {
+            num_untrusted_tasks++;
+        }
+    }
+
+    double result[8];
+    for (int i = 0; i < 8; i++)
+    {
+        result[i] = 0;
+    }
+
+    double nor_an_h = 0;
+    double rep_an_h = 0;
+
+    int success = sim_partition(tasks, n, m, result, 0, 0, 0, 0);
+    if (!success)
+        continue;
+
+    nor_an_h = result[3];
+    
+    success = sim_partition(tasks, n, m, result, 1, 1, 1, 1);
+    if (!success)
+        continue;
+    
+    rep_an_h = result[3];
+
+    double change = rep_an_h / nor_an_h;
+
+    printf("U=%.2f,", actual_U);
+    printf("f=%.2f,", (double)num_untrusted_tasks / (double)n);
+    printf("score=%.3f -> %.3f   (%.3f)", nor_an_h, rep_an_h, change);
+
+    free_tasks(tasks, n);
+    printf("\n");
+
+    }
+}
+}
 
     return 0;
 }

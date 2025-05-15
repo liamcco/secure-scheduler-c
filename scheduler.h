@@ -65,5 +65,6 @@ int worst_case_maximum_inversion_budget(Task *task, Task **tasks);
 int upper_bound_interference_from_hp(Task *task_i, Task **tasks);
 int worst_case_maximum_inversion_budget_risat(Task *task, Task **tasks);
 int upper_bound_interference_from_hp_risat(Task *task_i, Task **tasks);
+int worst_case_maximum_inversion_budget_migration(Task *task, Task **tasks);
 
 #endif // SCHEDULER_H

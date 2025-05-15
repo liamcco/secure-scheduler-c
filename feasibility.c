@@ -6,10 +6,12 @@
 #include "math.h"
 #include "opa.h"
 #include "priority.h"
+#include "task.h"
 
 
 int RTA_custom(Task **tasks, int num_tasks, int (*compare)(const void *, const void *), int migration)
 {
+    //printf("Now performing RTA on set with %d tasks\n", num_tasks);
     Task **approved_tasks = malloc(num_tasks * sizeof(Task *));
     for (int i = 0; i < num_tasks; i++)
     {
@@ -21,6 +23,7 @@ int RTA_custom(Task **tasks, int num_tasks, int (*compare)(const void *, const v
 
     for (int i = 0; i < num_tasks; i++)
     {
+        //printf("Checking if task %d fits\n", approved_tasks[i]->id);
         if (!response_time_custom(approved_tasks[i], approved_tasks, i, migration))
         {
             free(approved_tasks);
@@ -42,41 +45,32 @@ int RTA_migration(Task **tasks, int num_tasks, int (*compare)(const void *, cons
     return RTA_custom(tasks, num_tasks, compare, 1);
 }
 
-int response_time_custom(Task *task, Task **hp_set, int num_tasks, int migration)
+int response_time(Task *task, Task **hp_set, int num_tasks)
 {
-    //printf("Task %d (T=%d): guess=%d WCRT=", task->id, task->period, task->duration);
-    int wcrt_guess = task->remaining_execution_time;
+    //printf("NORMAL Task %d (T=%d, C=%d): WCRT=?\n", task->id, task->period, task->duration);
+    int wcrt_guess = task->duration;
     int wcrt;
 
-    int base;
-    if (migration) {
-        base = task->remaining_execution_time;
-        if (task->remaining_execution_time == task->duration)
-            base += task->max_jitter;
-    }
-    else {
-        base = task->duration + task->max_jitter;
-    }
-
-    int deadline;
-    if (migration)
-        deadline = task->remaining_deadline;
-    else
-        deadline = task->deadline;
+    int base = task->duration;
+    int deadline = task->deadline - task->max_jitter;
 
     while (1)
     {
         wcrt = wcrt_guess;
         wcrt_guess = base;
+        //printf("R = %d", base);
         for (int i = 0; i < num_tasks; i++)
         {
             Task *t = hp_set[i];
-            wcrt_guess += migration * t->remaining_execution_time + ((float)(wcrt + (1 - migration) * t->max_jitter - migration * t->remaining_execution_time) / (float)t->period) * t->duration;
+            wcrt_guess += ceil((float)(wcrt + t->max_jitter) / (float)t->period) * t->duration;
+            //printf(" + %d", (int)ceil((float)(wcrt + t->max_jitter) / (float)t->period) * t->duration);
+            //printf(" + ceil((%d + %d) / %d) * %d", wcrt, t->max_jitter, t->period, t->duration);
         }
+
+        //printf(" = %d\n", wcrt_guess);
 
         if (wcrt_guess > deadline)
         {
-            //printf(">%d\n", wcrt_guess);
             return 0;
         }
 
@@ -90,14 +84,55 @@ int response_time_custom(Task *task, Task **hp_set, int num_tasks, int migration
     return wcrt;
 }
 
-int response_time(Task *task, Task **hp_set, int num_tasks)
-{
-    return response_time_custom(task, hp_set, num_tasks, 0);
-}
-
 int response_time_migration(Task *task, Task **hp_set, int num_tasks)
 {
-    return response_time_custom(task, hp_set, num_tasks, 1);
+    //printf("MIGATION Task %d (T=%d, C=%d): WCRT=?\n", task->id, task->period, task->duration);
+    int wcrt_guess = task->remaining_execution_time;
+    int wcrt;
+
+    int base = task->remaining_execution_time;
+    int relative_task_time = task->period - task->time_until_next_period;
+    if (!is_ready(task) && base > 0)
+        base += task->max_jitter - relative_task_time;
+
+    int deadline = task->remaining_deadline;
+
+    while (1)
+    {
+        wcrt = wcrt_guess;
+        wcrt_guess = base;
+        //printf("R = %d", base);
+        for (int i = 0; i < num_tasks; i++)
+        {
+            Task *t = hp_set[i];
+            wcrt_guess += t->remaining_execution_time + ceil((float)(wcrt - t->time_until_next_period) / (float)t->period) * t->duration;
+    
+            //printf(" + %d + ceil((%d - %d) / %d) * %d", t->remaining_execution_time, wcrt, t->time_until_next_period, t->period, t->duration);
+            //printf(" + %d", t->remaining_execution_time + (int)ceil((float)(wcrt - t->time_until_next_period) / (float)t->period) * t->duration);
+        }
+
+        //printf(" = %d\n", wcrt_guess);
+
+        if (wcrt_guess > deadline)
+        {
+            return 0;
+        }
+
+        if (wcrt_guess == wcrt)
+        {
+            break;
+        }
+    }
+
+    //printf("%d\n", wcrt);
+    return wcrt;
+}
+
+int response_time_custom(Task *task, Task **hp_set, int num_tasks, int migration) {
+    if (migration)
+        return response_time_migration(task, hp_set, num_tasks);
+    else
+        return response_time(task, hp_set, num_tasks);
 }
 
 int RTA_test_with_custom(TaskGroup *group, Task *task, int (*compare)(const void *, const void *), int migration)

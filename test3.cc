@@ -63,8 +63,8 @@ int sim_partition(Task **tasks, int n, int m, double *result, int reprioritize, 
     processor->analyze = &analyze_simulation;
 
     // Load tasks according to the given allocation
-    prioritize(tasks, n, &RM);
-    int load_was_successful = load_tasks(processor, tasks, n, &wf);
+    prioritize(tasks, n, DU);
+    int load_was_successful = load_tasks(processor, tasks, n, &wfminm2);
     if (!load_was_successful)
     {
         free_processor(processor);
@@ -93,8 +93,8 @@ int main(void)
     int n = 25; // Number of tasks
     int m = 4; // Number of bins
 
-    for (int f = 4; f <= 20; f+=4) {
     for (int e=0; e < 5; e++) {
+    for (int f = 4; f <= 20; f+=4) {
     double fraction_untrusted = (double)f / 100.0;
     for (int u = 2; u < 81; u++)
     {

@@ -38,6 +38,9 @@ Processor *init_processor_custom(int m, Scheduler *(*init_scheduler)(void))
     processor->log_timeslot_data = 0;
     processor->analyze = NULL;
 
+    processor->debug = 0;
+    processor->t_mitigation = 0;
+
     return processor;
 }
 
@@ -193,8 +196,11 @@ int run(Processor *processor, int hyperperiod, int num_hyperperiods, double *res
         log_execution(processor, t);
         time_step_processor(processor);
 
-        if (t % hyperperiod == hyperperiod - 1) {
-        //if (t % 100 == 0) {
+        //if (t % hyperperiod == hyperperiod - 1) {
+        if (t % processor->t_mitigation == processor->t_mitigation - 1) {
+            if (processor->debug)
+                printf("------------------------NEW HYPER PERIOD (t = %d) -------------------------\n", t);
+                
             if (processor->migration)
                 random_migration(processor);
             
