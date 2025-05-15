@@ -63,18 +63,6 @@ void execute_core(Core *core)
     }
 }
 
-void debug(Core *core)
-{
-    printf("Core %d:\n", core->core_id);
-    for (int j = 0; j < core->group->num_tasks; j++)
-    {
-        Task *task = core->group->tasks[j];
-        printf("Task %d: T=%d C=%d F=%d\n", task->id, task->period, task->duration, task->max_jitter);
-    }
-
-    printf("\n");
-}
-
 void time_step_core(Core *core)
 {
     time_step_scheduler(core->scheduler);
