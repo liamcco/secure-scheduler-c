@@ -325,8 +325,8 @@ int upper_bound_interference_from_hp_risat(Task *task_k, Task **tasks)
             continue;
         }
 
-        int Nk = floor((float)(task_k->deadline + task_i->maximum_inversion_budget) / (float)task_i->period);
-        interference += Nk * task_i->duration + MIN(task_i->duration, (task_k->deadline + task_i->maximum_inversion_budget - Nk * task_i->period));
+        int Nk = floor((float)(task_k->deadline + task_i->maximum_inversion_budget + task_i->max_jitter) / (float)task_i->period);
+        interference += Nk * task_i->duration + MIN(task_i->duration, (task_k->deadline + task_i->maximum_inversion_budget + task_i->max_jitter - Nk * task_i->period));
     }
     return interference;
 }

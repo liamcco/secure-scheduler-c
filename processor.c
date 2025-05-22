@@ -8,6 +8,7 @@
 #include "simulation.h"
 #include "migration.h"
 #include "reprioritze.h"
+#include "debug.h"
 
 Processor *init_processor(int m)
 {
@@ -197,7 +198,7 @@ int run(Processor *processor, int hyperperiod, int num_hyperperiods, double *res
         time_step_processor(processor);
 
         //if (t % hyperperiod == hyperperiod - 1) {
-        if (t % processor->t_mitigation == processor->t_mitigation - 1) {
+        if (processor->t_mitigation && t % processor->t_mitigation == processor->t_mitigation - 1) {
             if (processor->debug)
                 printf("------------------------NEW HYPER PERIOD (t = %d) -------------------------\n", t);
                 
