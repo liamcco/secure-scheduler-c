@@ -1,8 +1,5 @@
 #include <stdio.h>
-
 #include "debug.h"
-
-
 
 void debug_partition(Partition *tasks) {
     for (int m = 0; m < tasks->num_groups; m++) {
