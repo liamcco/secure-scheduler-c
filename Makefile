@@ -1,11 +1,17 @@
 # Compiler and Flags
 CC = gcc
-CFLAGS = -Wall -Wextra -Wpedantic -Werror -std=c11 -O0 # Added -O2 for optimization
+CFLAGS = -Wall -Wextra -Wpedantic -Werror -std=c11 -O0 -Iinclude
 
-# Source and Object Files
-SRC = $(wildcard *.c)
+# Directories
+SRC_DIR = src
+INC_DIR = include
 OBJ_DIR = build
-OBJ = $(patsubst %.c, $(OBJ_DIR)/%.o, $(SRC))
+
+# Find all .c files recursively
+SRC = $(shell find $(SRC_DIR) -name '*.c')
+
+# Map each .c file in src/ to a .o file in build/, preserving directory structure
+OBJ = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC))
 
 # Output Executable
 TARGET = program
@@ -13,32 +19,29 @@ TARGET = program
 # Default Rule: Build Executable
 all: $(TARGET)
 
-# Ensure build directory exists
-$(OBJ_DIR):
-	mkdir -p $(OBJ_DIR)
+# Create build/ directory structure as needed before compiling
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -MMD -c $< -o $@
 
-# Link Object Files into Executable
+# Link object files into final executable
 $(TARGET): $(OBJ)
 	$(CC) $(OBJ) -o $(TARGET)
-
-# Compile .c to .o with header dependency tracking
-$(OBJ_DIR)/%.o: %.c | $(OBJ_DIR)
-	$(CC) $(CFLAGS) -MMD -c $< -o $@
 
 # Include header dependencies
 -include $(OBJ:.o=.d)
 
-# Clean Build Files
+# Clean rule
 clean:
 	rm -rf $(OBJ_DIR) $(TARGET)
 
-# Debug Build (no optimization)
-debug: CFLAGS += -g -O0  # Disable optimizations for easier debugging
+# Debug build
+debug: CFLAGS += -g -O0
 debug: clean all
 
-# Run the Program
+# Run the program
 run: $(TARGET)
 	./$(TARGET)
 
-# Phony Targets
+# Phony targets
 .PHONY: all clean debug run
