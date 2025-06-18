@@ -132,7 +132,7 @@ int main(void)
         actual_U += tasks[j]->utilization; // Calculate actual utilization
     }
 
-    int feasible = OPA_with_priority(tasks, n, &RRM); //
+    int feasible = OPA(tasks, n, &RM); //
     if (!feasible)
     {
         free_tasks(tasks, n);
@@ -214,7 +214,7 @@ int main(void)
     }
 
     // order tasks
-    OPA_with_priority(tasks, n, &RRM);
+    OPA(tasks, n, &RM);
     // run simulation with RM
     int success = try_simulation(tasks, n, result); // Run simulation with RM
     if (success)
@@ -223,32 +223,32 @@ int main(void)
         printf("RM_v=%.3f,", result[7] / max_v);
     }
 
-    OPA_with_priority(tasks, n, &IU);
-    success = try_simulation(tasks, n, result); // Run simulation with IU
+    OPA(tasks, n, &DU);
+    success = try_simulation(tasks, n, result); // Run simulation with DU
     if (success)
     {
         printf("DU_h=%.3f,", result[6] / max_h);
         printf("DU_v=%.3f,", result[7] / max_v);
     }
 
-    OPA_with_priority(tasks, n, &DU);
-    success = try_simulation(tasks, n, result); // Run simulation with DU
+    OPA(tasks, n, &IU);
+    success = try_simulation(tasks, n, result); // Run simulation with IU
     if (success)
     {
         printf("IU_h=%.3f,", result[6] / max_h);
         printf("IU_v=%.3f,", result[7] / max_v);
     }
 
-    OPA_with_priority(tasks, n, &SM);
-    success = try_simulation(tasks, n, result); // Run simulation with SM
+    OPA(tasks, n, &RSM);
+    success = try_simulation(tasks, n, result); // Run simulation with RSM
     if (success)
     {
         printf("RSM_h=%.3f,", result[6] / max_h);
         printf("RSM_v=%.3f,", result[7] / max_v);
     }
 
-    OPA_with_priority(tasks, n, &RSM);
-    success = try_simulation(tasks, n, result); // Run simulation with RSM
+    OPA(tasks, n, &SM);
+    success = try_simulation(tasks, n, result); // Run simulation with SM
     if (success)
     {
         printf("SM_h=%.3f,", result[6] / max_h);

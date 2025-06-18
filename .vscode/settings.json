@@ -2,6 +2,7 @@
     "files.associations": {
         "priority.h": "c",
         "charconv": "c",
-        "scheduler.h": "c"
+        "scheduler.h": "c",
+        "feasibility.h": "c"
     }
 }

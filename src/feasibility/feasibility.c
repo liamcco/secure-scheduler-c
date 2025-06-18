@@ -168,7 +168,7 @@ int RTA_test_with_custom_OPA(TaskGroup *group, Task *task, int (*compare)(const 
     if (compare) // If scheduler has strict rule, make sure to follow it
         prioritize(tasks_copy, num_tasks + 1, compare);
     else // If scheduler has no strict rule, use OPA
-        OPA_random(tasks_copy, num_tasks + 1);
+        OPA(tasks_copy, num_tasks + 1, NULL);
 
     int feasible = RTA_custom(tasks_copy, num_tasks + 1, NULL, migration);
     

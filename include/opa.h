@@ -3,7 +3,6 @@
 
 #include "task.h"
 
-int OPA_with_priority(Task **tasks, int num_tasks, int (*compare)(const void *, const void *));
-int OPA_random(Task **tasks, int num_tasks);
+int OPA(Task **tasks, int num_tasks, int (*compare)(const void *, const void *));
 
 #endif // OPA_H
